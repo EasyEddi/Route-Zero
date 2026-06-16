@@ -22,6 +22,7 @@
   ## Was lasse ich (erstmal) weg?
    - Auf Klick auf das Pokemon die Shiny Version des pokemons anzeigen
    - Infotext ob Shiny-locked oder nicht
+   - roll animation
 
   ## Mockups (optional)
   
