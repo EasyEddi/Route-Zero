@@ -25,4 +25,4 @@
    - roll animation
 
   ## Mockups (optional)
-  
+  <img width="1086" height="1448" alt="image" src="https://github.com/user-attachments/assets/578e5c95-589f-476c-9fc3-ebac4da83a98" />
