@@ -619,7 +619,10 @@ button {
 .settingsFooter {
   display: grid;
   gap: 12px;
+  width: 100%;
   margin: 16px 0 0;
+  align-items: stretch;
+  justify-content: stretch;
   color: var(--muted);
   font-size: 0.95rem;
 }
@@ -634,6 +637,7 @@ button {
   gap: 0;
   width: calc(100% + 32px);
   margin-inline: -16px;
+  justify-self: stretch;
 }
 
 .settingsActionButton {
