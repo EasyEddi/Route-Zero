@@ -665,6 +665,84 @@ button {
   color: #576b8a;
 }
 
+.teamTools {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0 0;
+}
+
+.teamShinyButton {
+  position: relative;
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid rgba(255, 236, 138, 0.34);
+  border-radius: 999px;
+  color: #fff2a8;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.78), transparent 28%),
+    linear-gradient(180deg, rgba(135, 93, 20, 0.92), rgba(55, 34, 10, 0.96));
+  box-shadow:
+    0 0 0 4px rgba(255, 218, 72, 0.08),
+    0 16px 38px rgba(235, 175, 50, 0.22);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.teamShinyButton::before {
+  position: absolute;
+  inset: -40%;
+  content: "";
+  background: conic-gradient(from 0deg, transparent, rgba(255, 244, 173, 0.56), transparent 28%);
+  opacity: 0.65;
+  animation: teamShinySpin 2.6s linear infinite;
+}
+
+.teamShinyButton > svg {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 12px rgba(255, 235, 110, 0.54));
+}
+
+.teamShinyButton:hover {
+  border-color: rgba(255, 239, 143, 0.78);
+  box-shadow:
+    0 0 0 5px rgba(255, 218, 72, 0.14),
+    0 18px 42px rgba(235, 175, 50, 0.3);
+  transform: translateY(-1px) scale(1.04);
+}
+
+.teamShinyButton[data-active="true"] {
+  color: #231a05;
+  border-color: rgba(255, 238, 116, 0.95);
+  background:
+    radial-gradient(circle at 30% 20%, #fffde0, transparent 34%),
+    linear-gradient(180deg, #ffe978, #efad2d);
+}
+
+.teamShinyButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
+.appRoot[data-theme="light"] .teamShinyButton {
+  color: #3b2a05;
+  border-color: rgba(208, 151, 22, 0.34);
+  background:
+    radial-gradient(circle at 30% 20%, #fffde0, transparent 34%),
+    linear-gradient(180deg, #ffe978, #efad2d);
+  box-shadow:
+    0 0 0 4px rgba(218, 164, 30, 0.12),
+    0 16px 38px rgba(177, 128, 26, 0.2);
+}
+
 .message {
   display: grid;
   place-items: center;
@@ -1419,6 +1497,12 @@ button {
     opacity: 1;
     filter: drop-shadow(0 20px 22px rgba(0, 0, 0, 0.36));
     transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes teamShinySpin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

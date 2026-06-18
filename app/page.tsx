@@ -156,6 +156,40 @@ export default function Home() {
     });
   }
 
+  function warmTeamShinySprites() {
+    team.forEach((entry) => {
+      if (entry) {
+        warmShinySprite(entry);
+      }
+    });
+  }
+
+  function toggleTeamShinyCards() {
+    const entries = team.filter((entry): entry is PokemonEntry => entry !== undefined);
+    const allShiny = entries.length > 0 && entries.every((_, index) => shinyCards[`team-${index}`]);
+
+    if (allShiny) {
+      setShinyCards((current) => {
+        const next = { ...current };
+        entries.forEach((_, index) => {
+          next[`team-${index}`] = false;
+        });
+        return next;
+      });
+      return;
+    }
+
+    void Promise.all(entries.map((entry) => preloadPokemonSprite(entry))).then(() => {
+      setShinyCards((current) => {
+        const next = { ...current };
+        entries.forEach((_, index) => {
+          next[`team-${index}`] = true;
+        });
+        return next;
+      });
+    });
+  }
+
   function updateFilter<Key extends keyof TeamFilters>(key: Key, value: TeamFilters[Key]) {
     setFilters((current) => ({ ...current, [key]: value }));
   }
@@ -383,6 +417,24 @@ export default function Home() {
           </div>
 
           {error ? <div className="message error">{error}</div> : null}
+
+          {team.length > 0 ? (
+            <div className="teamTools">
+              <button
+                className="teamShinyButton"
+                type="button"
+                data-active={team.every((_, index) => shinyCards[`team-${index}`])}
+                onClick={toggleTeamShinyCards}
+                onFocus={warmTeamShinySprites}
+                onPointerEnter={warmTeamShinySprites}
+                disabled={isRolling || team.length === 0}
+                aria-label="Toggle shiny artwork for the full team"
+                title="Toggle full team shiny"
+              >
+                <Sparkles size={22} />
+              </button>
+            </div>
+          ) : null}
 
           {isRolling || (rollingSlots.length > 0 && team.length > 0) ? (
             <div className="teamGrid rollingGrid" aria-label="Rolling Pokemon silhouettes">
