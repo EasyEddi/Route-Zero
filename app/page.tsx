@@ -15,7 +15,9 @@ import {
   ShieldCheck,
   Sparkles,
   Moon,
+  Repeat2,
   Sun,
+  Tags,
   Users,
 } from "lucide-react";
 import { games } from "@/data/games";
@@ -32,6 +34,8 @@ const defaultFilters: TeamFilters = {
   allowEventPokemon: false,
   allowTradePokemon: false,
   allowRoamingPokemon: false,
+  allowDuplicatePokemon: false,
+  allowDuplicateTypes: false,
 };
 
 const typeLabels: Record<string, string> = {
@@ -296,6 +300,20 @@ export default function Home() {
               checked={filters.allowRoamingPokemon}
               onChange={(checked) => updateFilter("allowRoamingPokemon", checked)}
             />
+            <ToggleRow
+              icon={<Repeat2 size={22} />}
+              label="Duplicate Pokemon"
+              description="The same Pokemon can appear more than once in the same team."
+              checked={filters.allowDuplicatePokemon}
+              onChange={(checked) => updateFilter("allowDuplicatePokemon", checked)}
+            />
+            <ToggleRow
+              icon={<Tags size={22} />}
+              label="Duplicate Pokemon types"
+              description="Multiple team members can share one or more Pokemon types."
+              checked={filters.allowDuplicateTypes}
+              onChange={(checked) => updateFilter("allowDuplicateTypes", checked)}
+            />
 
             <div className="typeBlock">
               <div className="typeBlockHeader">
@@ -402,7 +420,7 @@ export default function Home() {
                 entry ? (
                   <article
                     className={`pokemonCard ${isRevealing ? "revealedCard" : ""}`}
-                    key={entry.id}
+                    key={`${entry.id}-${index}`}
                     style={{ ["--delay" as string]: `${index * 55}ms` }}
                   >
                     <span className="dexNumber">{String(entry.id).padStart(3, "0")}</span>
