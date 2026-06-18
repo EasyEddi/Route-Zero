@@ -131,37 +131,37 @@
   ## Task-Liste
 
   ### Phase 1: Projekt aufsetzen
-  - [ ] Next.js-Projekt mit TypeScript erstellen.
-  - [ ] App Router aktivieren.
-  - [ ] Styling-Entscheidung treffen: CSS Modules, globale CSS-Dateien oder Tailwind CSS.
-  - [ ] Basis-Dateien anlegen:
-    - [ ] `app/page.tsx`
-    - [ ] `app/layout.tsx`
+  - [x] Next.js-Projekt mit TypeScript erstellen.
+  - [x] App Router aktivieren.
+  - [x] Styling-Entscheidung treffen: globale CSS-Dateien.
+  - [x] Basis-Dateien anlegen:
+    - [x] `app/page.tsx`
+    - [x] `app/layout.tsx`
     - [ ] `components/`
-    - [ ] `lib/`
-    - [ ] `data/`
+    - [x] `lib/`
+    - [x] `data/`
     - [ ] `scripts/`
   - [ ] Lokalen Dev-Server mit `next dev` starten.
-  - [ ] Build mit `next build` prüfen.
+  - [x] Build mit `next build` prüfen.
 
   ### Phase 2: Datenstrategie
-  - [ ] Entscheiden, mit welchem Spiel oder Spielepaar der MVP startet.
-  - [ ] Pokemon-Datentyp definieren.
-  - [ ] Game-Datentyp definieren.
-  - [ ] Liste aller Pokemon-Typen definieren.
+  - [x] Entscheiden, mit welchem Spiel oder Spielepaar der MVP startet: Feuerrot, Blattgruen und Smaragd als erste lokale Beispieldaten.
+  - [x] Pokemon-Datentyp definieren.
+  - [x] Game-Datentyp definieren.
+  - [x] Liste aller Pokemon-Typen definieren.
   - [ ] PokéAPI als Quelle für Basisdaten verwenden:
     - [ ] ID
     - [ ] Name
     - [ ] Typen
     - [ ] Sprite/Piktogramm
     - [ ] Evolution Chain
-  - [ ] Manuell kuratierte Zusatzdaten ergänzen:
-    - [ ] verfügbare Spiele
-    - [ ] fully evolved ja/nein
-    - [ ] Event-Pokemon ja/nein
-    - [ ] Trade-only ja/nein
-    - [ ] Roaming ja/nein
-  - [ ] Daten lokal im Repo speichern, damit die App nicht bei jedem Seitenaufruf externe APIs braucht.
+  - [x] Manuell kuratierte Zusatzdaten ergänzen:
+    - [x] verfügbare Spiele
+    - [x] fully evolved ja/nein
+    - [x] Event-Pokemon ja/nein
+    - [x] Trade-only ja/nein
+    - [x] Roaming ja/nein
+  - [x] Daten lokal im Repo speichern, damit die App nicht bei jedem Seitenaufruf externe APIs braucht.
 
   ### Phase 3: Daten-Script
   - [ ] Script `scripts/fetch-pokemon-data.ts` anlegen.
@@ -173,29 +173,29 @@
   - [ ] Script dokumentieren.
 
   ### Phase 4: Generatorlogik
-  - [ ] Funktion zum Filtern nach Spiel bauen.
-  - [ ] Funktion zum Filtern nach Typ bauen.
-  - [ ] Filter für nicht vollentwickelte Pokemon bauen.
-  - [ ] Filter für Event-Pokemon bauen.
-  - [ ] Filter für Trade-only Pokemon bauen.
-  - [ ] Filter für Roaming-Pokemon bauen.
-  - [ ] Funktion zum zufälligen Ziehen von sechs unterschiedlichen Pokemon bauen.
-  - [ ] Fehlerfall behandeln, wenn weniger als sechs Pokemon übrig sind.
-  - [ ] Generatorlogik in `lib/` isolieren.
+  - [x] Funktion zum Filtern nach Spiel bauen.
+  - [x] Funktion zum Filtern nach Typ bauen.
+  - [x] Filter für nicht vollentwickelte Pokemon bauen.
+  - [x] Filter für Event-Pokemon bauen.
+  - [x] Filter für Trade-only Pokemon bauen.
+  - [x] Filter für Roaming-Pokemon bauen.
+  - [x] Funktion zum zufälligen Ziehen von sechs unterschiedlichen Pokemon bauen.
+  - [x] Fehlerfall behandeln, wenn weniger als sechs Pokemon übrig sind.
+  - [x] Generatorlogik in `lib/` isolieren.
 
   ### Phase 5: UI bauen
-  - [ ] Hauptseite ohne Landingpage erstellen.
-  - [ ] Spielauswahl bauen.
-  - [ ] Typfilter bauen.
-  - [ ] Checkboxen für Zusatzfilter bauen.
-  - [ ] Roll-Button bauen.
-  - [ ] Ergebnisbereich für sechs Pokemon bauen.
-  - [ ] Pokemon-Karte bauen:
-    - [ ] Sprite/Piktogramm
-    - [ ] Name
-    - [ ] Typen
-  - [ ] Leeren Zustand vor dem ersten Roll anzeigen.
-  - [ ] Fehlerzustand bei zu strengen Filtern anzeigen.
+  - [x] Hauptseite ohne Landingpage erstellen.
+  - [x] Spielauswahl bauen.
+  - [x] Typfilter bauen.
+  - [x] Checkboxen für Zusatzfilter bauen.
+  - [x] Roll-Button bauen.
+  - [x] Ergebnisbereich für sechs Pokemon bauen.
+  - [x] Pokemon-Karte bauen:
+    - [x] Sprite/Piktogramm
+    - [x] Name
+    - [x] Typen
+  - [x] Leeren Zustand vor dem ersten Roll anzeigen.
+  - [x] Fehlerzustand bei zu strengen Filtern anzeigen.
   - [ ] Responsive Layout für Desktop und Mobile prüfen.
 
   ### Phase 6: Tests
@@ -208,7 +208,7 @@
     - [ ] respektiert Zusatzfilter
     - [ ] gibt Fehler bei zu kleinem Pool zurück
   - [ ] Manuelle UI-Tests durchführen.
-  - [ ] `next build` vor Deployment ausführen.
+  - [x] `next build` vor Deployment ausführen.
 
   ### Phase 7: Vercel Deployment
   - [ ] GitHub-Repository mit Vercel verbinden.
