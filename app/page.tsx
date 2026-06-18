@@ -97,7 +97,7 @@ export default function Home() {
 
     return currentPool.filter((entry) => {
       const dexNumber = String(entry.id).padStart(3, "0");
-      return entry.name.toLowerCase().includes(query) || dexNumber.includes(query);
+      return entry.name.toLowerCase().startsWith(query) || dexNumber.startsWith(query);
     });
   }, [currentPool, poolSearch]);
   const searchedGames = useMemo(() => {
