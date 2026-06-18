@@ -60,7 +60,10 @@ export default function Home() {
   const [isRolling, setIsRolling] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
   const [isPoolOpen, setIsPoolOpen] = useState(false);
+  const [isGameOpen, setIsGameOpen] = useState(false);
+  const [isTeamSizeOpen, setIsTeamSizeOpen] = useState(false);
   const [poolSearch, setPoolSearch] = useState("");
+  const [gameSearch, setGameSearch] = useState("");
   const [rollingSlots, setRollingSlots] = useState<PokemonEntry[]>([]);
 
   const selectedGame = games.find((game) => game.id === filters.gameId);
@@ -85,6 +88,15 @@ export default function Home() {
       return entry.name.toLowerCase().includes(query) || dexNumber.includes(query);
     });
   }, [currentPool, poolSearch]);
+  const searchedGames = useMemo(() => {
+    const query = gameSearch.trim().toLowerCase();
+
+    if (!query) {
+      return games;
+    }
+
+    return games.filter((game) => game.name.toLowerCase().includes(query) || game.shortName.toLowerCase().includes(query));
+  }, [gameSearch]);
 
   function updateFilter<Key extends keyof TeamFilters>(key: Key, value: TeamFilters[Key]) {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -102,11 +114,19 @@ export default function Home() {
     });
   }
 
-  function changeTeamSize(direction: number) {
-    setFilters((current) => ({
-      ...current,
-      teamSize: Math.min(6, Math.max(1, current.teamSize + direction)),
-    }));
+  function selectGame(gameId: string) {
+    updateFilter("gameId", gameId);
+    setTeamIds([]);
+    setError(null);
+    setGameSearch("");
+    setIsGameOpen(false);
+  }
+
+  function selectTeamSize(teamSize: number) {
+    updateFilter("teamSize", teamSize);
+    setTeamIds([]);
+    setError(null);
+    setIsTeamSizeOpen(false);
   }
 
   function handleRoll() {
@@ -178,39 +198,17 @@ export default function Home() {
               <Settings size={21} />
             </div>
 
-            <label className="settingRow">
+            <button className="settingRow settingButton" type="button" onClick={() => setIsGameOpen(true)}>
               <Gamepad2 className="settingIcon" size={22} />
               <span className="settingLabel">Game</span>
-              <select
-                value={filters.gameId}
-                onChange={(event) => updateFilter("gameId", event.target.value)}
-              >
-                <option value="">Select a game</option>
-                {games.map((game) => (
-                  <option key={game.id} value={game.id}>
-                    {game.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <span className="settingValue">{selectedGame?.name ?? "Select a game"}</span>
+            </button>
 
-            <div className="settingRow compact">
+            <button className="settingRow settingButton compact" type="button" onClick={() => setIsTeamSizeOpen(true)}>
               <Users className="settingIcon" size={22} />
               <span className="settingLabel">Team size</span>
-              <div className="stepper" aria-label="Team size">
-                {filters.teamSize > 1 ? (
-                  <button type="button" onClick={() => changeTeamSize(-1)} aria-label="Decrease team size">
-                    -
-                  </button>
-                ) : null}
-                <strong>{filters.teamSize}</strong>
-                {filters.teamSize < 6 ? (
-                  <button type="button" onClick={() => changeTeamSize(1)} aria-label="Increase team size">
-                    +
-                  </button>
-                ) : null}
-              </div>
-            </div>
+              <span className="settingValue strongValue">{filters.teamSize}</span>
+            </button>
 
             <ToggleRow
               icon={<ShieldCheck size={22} />}
@@ -398,6 +396,83 @@ export default function Home() {
                     ))}
                   </div>
                 </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isGameOpen ? (
+        <div className="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="game-title">
+          <section className="poolModal pickerModal">
+            <div className="poolModalHeader">
+              <div>
+                <p>Route Zero</p>
+                <h2 id="game-title">Choose game</h2>
+                <span>{searchedGames.length} games shown</span>
+              </div>
+              <button className="modalCloseButton" type="button" onClick={() => setIsGameOpen(false)} aria-label="Close game picker">
+                <X size={24} />
+              </button>
+            </div>
+
+            <label className="poolSearch">
+              <Search size={19} />
+              <input
+                type="search"
+                value={gameSearch}
+                onChange={(event) => setGameSearch(event.target.value)}
+                placeholder="Search game"
+              />
+            </label>
+
+            <div className="gameGrid" aria-label="Pokemon games">
+              {searchedGames.map((game, index) => (
+                <button
+                  className="gameCard"
+                  data-active={game.id === filters.gameId}
+                  key={game.id}
+                  type="button"
+                  onClick={() => selectGame(game.id)}
+                  style={{ ["--cover-hue" as string]: `${(index * 37) % 360}deg` }}
+                >
+                  <span className="gameCover" aria-hidden="true">
+                    <span>PKMN</span>
+                    <strong>{game.shortName}</strong>
+                  </span>
+                  <span className="gameName">{game.name}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isTeamSizeOpen ? (
+        <div className="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="team-size-title">
+          <section className="poolModal sizeModal">
+            <div className="poolModalHeader">
+              <div>
+                <p>Team setup</p>
+                <h2 id="team-size-title">Choose team size</h2>
+                <span>Pick a team size from 1 to 6.</span>
+              </div>
+              <button className="modalCloseButton" type="button" onClick={() => setIsTeamSizeOpen(false)} aria-label="Close team size picker">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="sizeGrid" aria-label="Team size options">
+              {[1, 2, 3, 4, 5, 6].map((size) => (
+                <button
+                  className="sizeCard"
+                  data-active={size === filters.teamSize}
+                  key={size}
+                  type="button"
+                  onClick={() => selectTeamSize(size)}
+                >
+                  {size}
+                </button>
               ))}
             </div>
           </section>

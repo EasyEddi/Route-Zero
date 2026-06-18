@@ -31,7 +31,7 @@ body {
 }
 
 button,
-select {
+input {
   font: inherit;
 }
 
@@ -180,6 +180,7 @@ button {
 }
 
 .pokeballGlow::before {
+  z-index: 1;
   left: 0;
   right: 0;
   height: 18px;
@@ -187,10 +188,11 @@ button {
 }
 
 .pokeballGlow::after {
+  z-index: 2;
   width: 34px;
   height: 34px;
   border-color: #101b31;
-  background: rgba(80, 97, 180, 0.72);
+  background: #4f61b4;
 }
 
 .intro h1,
@@ -293,13 +295,36 @@ button {
   background: rgba(5, 15, 29, 0.72);
 }
 
-.settingRow select {
-  width: 180px;
-  min-width: 0;
-  color: var(--text);
-  border: 0;
-  outline: 0;
-  background: transparent;
+.settingButton {
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settingButton:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(10, 23, 42, 0.86);
+}
+
+.settingValue {
+  max-width: 220px;
+  overflow: hidden;
+  color: #dce5f8;
+  font-weight: 800;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strongValue {
+  display: inline-grid;
+  min-width: 38px;
+  min-height: 34px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(26, 39, 62, 0.94);
+  font-size: 1.15rem;
 }
 
 .settingRow.compact strong {
@@ -804,6 +829,121 @@ button {
   padding: 0 24px 24px;
 }
 
+.gameGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 24px 24px;
+}
+
+.gameCard {
+  display: grid;
+  gap: 12px;
+  justify-items: stretch;
+  min-height: 214px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% 25%, rgba(95, 119, 190, 0.2), transparent 8rem),
+    linear-gradient(180deg, rgba(18, 31, 51, 0.86), rgba(10, 18, 31, 0.9));
+  cursor: pointer;
+}
+
+.gameCard:hover,
+.gameCard[data-active="true"] {
+  border-color: rgba(177, 140, 255, 0.62);
+  box-shadow: 0 0 0 1px rgba(143, 87, 255, 0.28) inset;
+}
+
+.gameCover {
+  position: relative;
+  display: grid;
+  min-height: 146px;
+  align-content: space-between;
+  padding: 14px;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.28), transparent 3.5rem),
+    linear-gradient(135deg, hsl(var(--cover-hue) 80% 45%), hsl(calc(var(--cover-hue) + 45deg) 80% 28%));
+}
+
+.gameCover::before {
+  position: absolute;
+  inset: auto -20px -34px auto;
+  width: 110px;
+  height: 110px;
+  content: "";
+  border: 12px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+
+.gameCover span,
+.gameCover strong {
+  position: relative;
+  z-index: 1;
+}
+
+.gameCover span {
+  font-size: 0.8rem;
+  font-weight: 900;
+  opacity: 0.8;
+}
+
+.gameCover strong {
+  align-self: end;
+  font-size: 1rem;
+  line-height: 1.08;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+}
+
+.gameName {
+  display: block;
+  min-height: 2.3em;
+  color: #f4f7ff;
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.sizeModal {
+  width: min(560px, 100%);
+}
+
+.sizeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px 24px 24px;
+}
+
+.sizeCard {
+  display: grid;
+  min-height: 132px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% 35%, rgba(143, 87, 255, 0.2), transparent 6rem),
+    linear-gradient(180deg, rgba(18, 31, 51, 0.86), rgba(10, 18, 31, 0.9));
+  font-size: 2.45rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.sizeCard:hover,
+.sizeCard[data-active="true"] {
+  border-color: rgba(177, 140, 255, 0.62);
+  background:
+    radial-gradient(circle at 50% 35%, rgba(143, 87, 255, 0.34), transparent 6rem),
+    linear-gradient(180deg, rgba(32, 45, 72, 0.92), rgba(15, 24, 42, 0.94));
+}
+
 .poolCard {
   position: relative;
   display: grid;
@@ -987,8 +1127,8 @@ button {
     grid-template-columns: 24px minmax(0, 1fr);
   }
 
-  .settingRow select,
   .stepper,
+  .settingValue,
   .toggleRow input {
     grid-column: 2;
     justify-self: start;
@@ -999,6 +1139,11 @@ button {
   }
 
   .poolGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .gameGrid,
+  .sizeGrid {
     grid-template-columns: 1fr;
   }
 
