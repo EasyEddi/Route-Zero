@@ -318,10 +318,6 @@ export default function Home() {
           ) : null}
 
           <div className="actionBar">
-            <button className="secondaryButton" type="button" onClick={handleRoll} disabled={isRolling}>
-              <RotateCcw size={21} />
-              Roll again
-            </button>
             <button
               className="primaryButton slim"
               type="button"
