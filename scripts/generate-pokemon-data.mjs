@@ -96,6 +96,10 @@ function nativeGamesFromEncounters(encounters) {
   const nativeGames = new Set();
 
   for (const encounter of encounters) {
+    if (encounter.location_area.name.includes("altering-cave")) {
+      continue;
+    }
+
     for (const versionDetail of encounter.version_details) {
       const gameId = versionMap.get(versionDetail.version.name);
 

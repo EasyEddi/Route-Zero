@@ -210,7 +210,7 @@ export default function Home() {
             <ToggleRow
               icon={<RotateCcw size={22} />}
               label="Allow trade-Pokemon"
-              description="Trade-only evolutions can appear when this is enabled."
+              description="Trade evolutions and Pokemon not natively available in this game can appear when this is enabled."
               checked={filters.allowTradePokemon}
               onChange={(checked) => updateFilter("allowTradePokemon", checked)}
             />
