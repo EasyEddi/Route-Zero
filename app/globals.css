@@ -867,19 +867,7 @@ button {
   padding: 8px;
   overflow: hidden;
   border-radius: 8px;
-  background:
-    radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.28), transparent 3.5rem),
-    linear-gradient(135deg, hsl(var(--cover-hue) 80% 45%), hsl(calc(var(--cover-hue) + 45deg) 80% 28%));
-}
-
-.gameCover::before {
-  position: absolute;
-  inset: auto -20px -34px auto;
-  width: 110px;
-  height: 110px;
-  content: "";
-  border: 12px solid rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
+  background: rgba(3, 10, 20, 0.42);
 }
 
 .gameCover img {
@@ -899,6 +887,9 @@ button {
   z-index: 0;
   display: grid;
   align-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(5, 15, 29, 0.92);
 }
 
 .gameCover img + .gameCoverFallback {
