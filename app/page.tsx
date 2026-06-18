@@ -76,6 +76,7 @@ export default function Home() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const rollIntervalRef = useRef<number | null>(null);
   const rollTimeoutsRef = useRef<number[]>([]);
+  const rollRunRef = useRef(0);
 
   const selectedGame = games.find((game) => game.id === filters.gameId);
   const team = useMemo(
@@ -120,6 +121,8 @@ export default function Home() {
   }, []);
 
   function clearRollTimers() {
+    rollRunRef.current += 1;
+
     if (rollIntervalRef.current !== null) {
       window.clearInterval(rollIntervalRef.current);
       rollIntervalRef.current = null;
@@ -252,6 +255,7 @@ export default function Home() {
 
   function handleRoll() {
     clearRollTimers();
+    const rollRun = rollRunRef.current;
 
     const result = rollTeam(filters, pokemon);
     const pool = applyFilters(filters, pokemon);
@@ -271,31 +275,41 @@ export default function Home() {
     setRevealedCount(0);
     setError(null);
     setTeamIds([]);
-    setRollingSlots(getRandomSlots(pool, filters.teamSize));
+    setRollingSlots([]);
 
-    rollIntervalRef.current = window.setInterval(() => {
-      setRollingSlots(getRandomSlots(pool, filters.teamSize));
-    }, 95);
+    const animationPool = getAnimationPool(pool);
 
-    const rollTimeout = window.setTimeout(() => {
-      setIsRolling(false);
-      setIsRevealing(true);
-      setTeamIds(result.team.map((entry) => entry.id));
-      result.team.forEach((_, index) => {
-        const revealTimeout = window.setTimeout(() => setRevealedCount(index + 1), index * 180);
-        rollTimeoutsRef.current.push(revealTimeout);
-      });
-      const completeTimeout = window.setTimeout(() => {
-        if (rollIntervalRef.current !== null) {
-          window.clearInterval(rollIntervalRef.current);
-          rollIntervalRef.current = null;
-        }
+    void preloadPokemonSprites(animationPool).then(() => {
+      if (rollRun !== rollRunRef.current) {
+        return;
+      }
 
-        setIsRevealing(false);
-      }, result.team.length * 180 + 760);
-      rollTimeoutsRef.current.push(completeTimeout);
-    }, 1700);
-    rollTimeoutsRef.current.push(rollTimeout);
+      setRollingSlots(getRandomSlots(animationPool, filters.teamSize));
+
+      rollIntervalRef.current = window.setInterval(() => {
+        setRollingSlots(getRandomSlots(animationPool, filters.teamSize));
+      }, 95);
+
+      const rollTimeout = window.setTimeout(() => {
+        setIsRolling(false);
+        setIsRevealing(true);
+        setTeamIds(result.team.map((entry) => entry.id));
+        result.team.forEach((_, index) => {
+          const revealTimeout = window.setTimeout(() => setRevealedCount(index + 1), index * 180);
+          rollTimeoutsRef.current.push(revealTimeout);
+        });
+        const completeTimeout = window.setTimeout(() => {
+          if (rollIntervalRef.current !== null) {
+            window.clearInterval(rollIntervalRef.current);
+            rollIntervalRef.current = null;
+          }
+
+          setIsRevealing(false);
+        }, result.team.length * 180 + 760);
+        rollTimeoutsRef.current.push(completeTimeout);
+      }, 1700);
+      rollTimeoutsRef.current.push(rollTimeout);
+    });
   }
 
   function resetFilters() {
@@ -491,11 +505,11 @@ export default function Home() {
                       />
                     ) : null}
                     <img
-                      src={isSlotRevealed ? getPokemonSprite(revealedEntry, isShiny) : getRollingSprite(entry)}
+                      src={isSlotRevealed ? getPokemonSprite(revealedEntry, isShiny) : entry.sprite}
                       alt=""
                       className={`pokemonSprite ${isSlotRevealed ? "" : "silhouetteSprite"} ${isShiny ? "shinySprite" : ""}`}
                       data-shiny={isSlotRevealed ? isShiny : undefined}
-                      key={isSlotRevealed ? `${revealedEntry.id}-${isShiny ? "shiny" : "normal"}` : `rolling-${entry.id}`}
+                      key={isSlotRevealed ? `${revealedEntry.id}-${isShiny ? "shiny" : "normal"}` : "rolling-silhouette"}
                       onError={(event) => {
                         if (isShiny && isSlotRevealed) {
                           event.currentTarget.src = revealedEntry.sprite;
@@ -773,6 +787,10 @@ function getRandomSlots(pool: PokemonEntry[], size: number) {
   return Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
 }
 
+function getAnimationPool(pool: PokemonEntry[]) {
+  return [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(pool.length, 30));
+}
+
 function getPokemonSprite(entry: PokemonEntry, shiny: boolean) {
   if (!shiny) {
     return entry.sprite;
@@ -781,14 +799,9 @@ function getPokemonSprite(entry: PokemonEntry, shiny: boolean) {
   return entry.sprite.replace("/official-artwork/", "/official-artwork/shiny/");
 }
 
-function getRollingSprite(entry: PokemonEntry) {
-  return entry.sprite.replace("/other/official-artwork/", "/");
-}
-
 const spritePreloadCache = new Map<string, Promise<void>>();
 
-function preloadPokemonSprite(entry: PokemonEntry) {
-  const sprite = getPokemonSprite(entry, true);
+function preloadSprite(sprite: string) {
   const cached = spritePreloadCache.get(sprite);
 
   if (cached) {
@@ -804,6 +817,14 @@ function preloadPokemonSprite(entry: PokemonEntry) {
 
   spritePreloadCache.set(sprite, preload);
   return preload;
+}
+
+function preloadPokemonSprite(entry: PokemonEntry) {
+  return preloadSprite(getPokemonSprite(entry, true));
+}
+
+function preloadPokemonSprites(entries: PokemonEntry[]) {
+  return Promise.all(entries.map((entry) => preloadSprite(entry.sprite)));
 }
 
 type ShinyToggleProps = {
