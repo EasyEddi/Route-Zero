@@ -400,8 +400,8 @@ export default function Home() {
                       src={isSlotRevealed ? getPokemonSprite(revealedEntry, isShiny) : entry.sprite}
                       alt=""
                       className={`pokemonSprite ${isSlotRevealed ? "" : "silhouetteSprite"} ${isShiny ? "shinySprite" : ""}`}
-                      data-shiny={isShiny}
-                      key={`${isSlotRevealed ? revealedEntry.id : entry.id}-${isShiny ? "shiny" : "normal"}`}
+                      data-shiny={isSlotRevealed ? isShiny : undefined}
+                      key={isSlotRevealed ? `${revealedEntry.id}-${isShiny ? "shiny" : "normal"}` : "rolling-silhouette"}
                       onError={(event) => {
                         if (isShiny && isSlotRevealed) {
                           event.currentTarget.src = revealedEntry.sprite;
