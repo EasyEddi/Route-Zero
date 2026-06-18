@@ -5,7 +5,10 @@ import {
   Ban,
   Copy,
   Dice5,
+  Eye,
   Gamepad2,
+  Search,
+  X,
   Menu,
   Mountain,
   RotateCcw,
@@ -57,6 +60,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isRolling, setIsRolling] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
+  const [isPoolOpen, setIsPoolOpen] = useState(false);
+  const [poolSearch, setPoolSearch] = useState("");
   const [rollingSlots, setRollingSlots] = useState<PokemonEntry[]>([]);
 
   const selectedGame = games.find((game) => game.id === filters.gameId) ?? games[0];
@@ -68,6 +73,19 @@ export default function Home() {
   const availableCount = useMemo(() => {
     return rollTeam(filters, pokemon, { dryRun: true }).availableCount;
   }, [filters]);
+  const currentPool = useMemo(() => applyFilters(filters, pokemon), [filters]);
+  const searchedPool = useMemo(() => {
+    const query = poolSearch.trim().toLowerCase();
+
+    if (!query) {
+      return currentPool;
+    }
+
+    return currentPool.filter((entry) => {
+      const dexNumber = String(entry.id).padStart(3, "0");
+      return entry.name.toLowerCase().includes(query) || dexNumber.includes(query);
+    });
+  }, [currentPool, poolSearch]);
 
   function updateFilter<Key extends keyof TeamFilters>(key: Key, value: TeamFilters[Key]) {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -248,6 +266,10 @@ export default function Home() {
 
             <div className="settingsFooter">
               <span>{availableCount} Pokemon in the pool for {selectedGame.shortName}</span>
+              <button type="button" onClick={() => setIsPoolOpen(true)}>
+                <Eye size={17} />
+                View pool
+              </button>
               <button type="button" onClick={resetFilters}>
                 Reset settings
               </button>
@@ -330,6 +352,50 @@ export default function Home() {
           </div>
         </section>
       </section>
+
+      {isPoolOpen ? (
+        <div className="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="pool-title">
+          <section className="poolModal">
+            <div className="poolModalHeader">
+              <div>
+                <p>{selectedGame.name}</p>
+                <h2 id="pool-title">Pokemon pool</h2>
+                <span>{searchedPool.length} of {currentPool.length} Pokemon shown</span>
+              </div>
+              <button className="modalCloseButton" type="button" onClick={() => setIsPoolOpen(false)} aria-label="Close pool">
+                <X size={24} />
+              </button>
+            </div>
+
+            <label className="poolSearch">
+              <Search size={19} />
+              <input
+                type="search"
+                value={poolSearch}
+                onChange={(event) => setPoolSearch(event.target.value)}
+                placeholder="Search Pokemon or dex number"
+              />
+            </label>
+
+            <div className="poolGrid" aria-label="Filtered Pokemon pool">
+              {searchedPool.map((entry) => (
+                <article className="poolCard" key={entry.id}>
+                  <span className="poolDex">{String(entry.id).padStart(3, "0")}</span>
+                  <img src={entry.sprite} alt="" />
+                  <h3>{entry.name}</h3>
+                  <div className="typeList">
+                    {entry.types.map((type) => (
+                      <span className="typeBadge compactBadge" data-type={type} key={type}>
+                        {typeLabels[type]}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

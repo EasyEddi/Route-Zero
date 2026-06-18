@@ -430,6 +430,8 @@ button {
 }
 
 .settingsFooter {
+  display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   margin: 16px 8px 0;
   color: var(--muted);
@@ -437,6 +439,9 @@ button {
 }
 
 .settingsFooter button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   border: 0;
   color: #b18cff;
   background: transparent;
@@ -690,6 +695,154 @@ button {
   margin: 28px 0 0;
 }
 
+.modalOverlay {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(2, 6, 12, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.poolModal {
+  width: min(980px, 100%);
+  max-height: min(86vh, 860px);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(95, 119, 190, 0.18), transparent 24rem),
+    linear-gradient(180deg, rgba(15, 27, 47, 0.98), rgba(7, 14, 25, 0.98));
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.58);
+}
+
+.poolModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.poolModalHeader p,
+.poolModalHeader h2 {
+  margin: 0;
+}
+
+.poolModalHeader p {
+  color: #9ab0d0;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.poolModalHeader h2 {
+  margin-top: 5px;
+  font-size: clamp(1.7rem, 4vw, 2.35rem);
+  line-height: 1.05;
+}
+
+.poolModalHeader span {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.modalCloseButton {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(18, 31, 52, 0.78);
+  cursor: pointer;
+}
+
+.poolSearch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 24px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  color: var(--muted);
+  background: rgba(5, 15, 29, 0.72);
+}
+
+.poolSearch input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+}
+
+.poolSearch input::placeholder {
+  color: #7f8ba1;
+}
+
+.poolGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 24px 24px;
+}
+
+.poolCard {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  min-height: 214px;
+  padding: 14px 12px 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(95, 119, 190, 0.2), transparent 8rem),
+    linear-gradient(180deg, rgba(18, 31, 51, 0.86), rgba(10, 18, 31, 0.9));
+}
+
+.poolDex {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: 1rem;
+  font-weight: 900;
+  color: #eef3ff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+}
+
+.poolCard img {
+  width: min(132px, 82%);
+  height: 112px;
+  margin-top: 14px;
+  object-fit: contain;
+  filter: drop-shadow(0 16px 16px rgba(0, 0, 0, 0.34));
+}
+
+.poolCard h3 {
+  margin: 4px 0 10px;
+  font-size: 1.08rem;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.compactBadge {
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
 @keyframes spinDice {
   0% {
     transform: rotate(0deg) scale(1);
@@ -837,6 +990,10 @@ button {
   }
 
   .teamGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .poolGrid {
     grid-template-columns: 1fr;
   }
 
