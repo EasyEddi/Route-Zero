@@ -287,6 +287,21 @@ export default function Home() {
     setFilters((current) => ({ ...current, [key]: value }));
   }
 
+  function updateDuplicatePokemon(checked: boolean) {
+    setFilters((current) => ({
+      ...current,
+      allowDuplicatePokemon: checked,
+      allowDuplicateTypes: checked ? true : current.allowDuplicateTypes,
+    }));
+  }
+
+  function updateDuplicateTypes(checked: boolean) {
+    setFilters((current) => ({
+      ...current,
+      allowDuplicateTypes: current.allowDuplicatePokemon ? true : checked,
+    }));
+  }
+
   function toggleBannedType(type: string) {
     setFilters((current) => {
       const hasType = current.bannedTypes.includes(type);
@@ -462,14 +477,14 @@ export default function Home() {
               label="Duplicate Pokemon"
               description="The same Pokemon can appear more than once in the same team."
               checked={filters.allowDuplicatePokemon}
-              onChange={(checked) => updateFilter("allowDuplicatePokemon", checked)}
+              onChange={updateDuplicatePokemon}
             />
             <ToggleRow
               icon={<Tags size={22} />}
               label="Duplicate Pokemon types"
               description="Multiple team members can share one or more Pokemon types."
               checked={filters.allowDuplicateTypes}
-              onChange={(checked) => updateFilter("allowDuplicateTypes", checked)}
+              onChange={updateDuplicateTypes}
             />
 
             <div className="typeBlock">

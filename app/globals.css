@@ -628,7 +628,20 @@ button {
 }
 
 .settingsFooter > span {
+  display: block;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #dce5f8;
+  background: rgba(5, 15, 29, 0.52);
+  font-weight: 800;
   line-height: 1.35;
+}
+
+.appRoot[data-theme="light"] .settingsFooter > span {
+  border-color: rgba(28, 42, 64, 0.12);
+  color: #243149;
+  background: rgba(255, 255, 255, 0.62);
 }
 
 .settingsFooterActions {
