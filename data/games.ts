@@ -3,17 +3,17 @@ import type { GameEntry } from "@/lib/types";
 export const games: GameEntry[] = [
   {
     id: "fire-red",
-    name: "Pokemon Feuerrot",
-    shortName: "Feuerrot",
+    name: "Pokemon FireRed",
+    shortName: "FireRed",
   },
   {
     id: "leaf-green",
-    name: "Pokemon Blattgruen",
-    shortName: "Blattgruen",
+    name: "Pokemon LeafGreen",
+    shortName: "LeafGreen",
   },
   {
     id: "emerald",
-    name: "Pokemon Smaragd",
-    shortName: "Smaragd",
+    name: "Pokemon Emerald",
+    shortName: "Emerald",
   },
 ];

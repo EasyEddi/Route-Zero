@@ -18,9 +18,10 @@ export type GameEntry = {
 
 export type TeamFilters = {
   gameId: string;
-  allowedTypes: string[];
-  ignoreNotFullyEvolved: boolean;
-  ignoreEventOnly: boolean;
-  ignoreTradeOnly: boolean;
-  ignoreRoaming: boolean;
+  teamSize: number;
+  bannedTypes: string[];
+  fullyEvolvedOnly: boolean;
+  allowEventPokemon: boolean;
+  allowTradePokemon: boolean;
+  allowRoamingPokemon: boolean;
 };

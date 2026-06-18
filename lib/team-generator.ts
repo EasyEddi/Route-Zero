@@ -22,26 +22,23 @@ export function applyFilters(filters: TeamFilters, entries: PokemonEntry[]) {
       return false;
     }
 
-    if (
-      filters.allowedTypes.length > 0 &&
-      !pokemon.types.some((type) => filters.allowedTypes.includes(type))
-    ) {
+    if (filters.bannedTypes.some((type) => pokemon.types.includes(type))) {
       return false;
     }
 
-    if (filters.ignoreNotFullyEvolved && !pokemon.fullyEvolved) {
+    if (filters.fullyEvolvedOnly && !pokemon.fullyEvolved) {
       return false;
     }
 
-    if (filters.ignoreEventOnly && pokemon.eventOnly) {
+    if (!filters.allowEventPokemon && pokemon.eventOnly) {
       return false;
     }
 
-    if (filters.ignoreTradeOnly && pokemon.tradeOnly) {
+    if (!filters.allowTradePokemon && pokemon.tradeOnly) {
       return false;
     }
 
-    if (filters.ignoreRoaming && pokemon.roaming) {
+    if (!filters.allowRoamingPokemon && pokemon.roaming) {
       return false;
     }
 
@@ -64,10 +61,10 @@ export function rollTeam(
     };
   }
 
-  if (pool.length < 6) {
+  if (pool.length < filters.teamSize) {
     return {
       ok: false,
-      message: `Mit diesen Filtern bleiben nur ${pool.length} Pokemon uebrig. Fuer ein Team brauchst du mindestens 6.`,
+      message: `Only ${pool.length} Pokemon match these filters. You need at least ${filters.teamSize} for this team.`,
       availableCount: pool.length,
     };
   }
@@ -76,7 +73,7 @@ export function rollTeam(
 
   return {
     ok: true,
-    team: shuffled.slice(0, 6),
+    team: shuffled.slice(0, filters.teamSize),
     availableCount: pool.length,
   };
 }
