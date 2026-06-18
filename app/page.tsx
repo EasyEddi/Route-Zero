@@ -56,6 +56,7 @@ export default function Home() {
   const [teamIds, setTeamIds] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isRolling, setIsRolling] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
   const [rollingSlots, setRollingSlots] = useState<PokemonEntry[]>([]);
 
   const selectedGame = games.find((game) => game.id === filters.gameId) ?? games[0];
@@ -87,7 +88,7 @@ export default function Home() {
   function changeTeamSize(direction: number) {
     setFilters((current) => ({
       ...current,
-      teamSize: Math.min(12, Math.max(1, current.teamSize + direction)),
+      teamSize: Math.min(6, Math.max(1, current.teamSize + direction)),
     }));
   }
 
@@ -100,10 +101,12 @@ export default function Home() {
       setTeamIds([]);
       setRollingSlots([]);
       setIsRolling(false);
+      setIsRevealing(false);
       return;
     }
 
     setIsRolling(true);
+    setIsRevealing(false);
     setError(null);
     setTeamIds([]);
     setRollingSlots(getRandomSlots(pool, filters.teamSize));
@@ -116,7 +119,9 @@ export default function Home() {
       window.clearInterval(interval);
       setIsRolling(false);
       setRollingSlots([]);
+      setIsRevealing(true);
       setTeamIds(result.team.map((entry) => entry.id));
+      window.setTimeout(() => setIsRevealing(false), 820);
     }, 1700);
   }
 
@@ -126,6 +131,7 @@ export default function Home() {
     setTeamIds([]);
     setRollingSlots([]);
     setIsRolling(false);
+    setIsRevealing(false);
   }
 
   return (
@@ -290,7 +296,11 @@ export default function Home() {
             <div className="teamGrid" style={{ ["--card-count" as string]: team.length }}>
               {team.map((entry, index) =>
                 entry ? (
-                  <article className="pokemonCard" key={entry.id} style={{ ["--delay" as string]: `${index * 55}ms` }}>
+                  <article
+                    className={`pokemonCard ${isRevealing ? "revealedCard" : ""}`}
+                    key={entry.id}
+                    style={{ ["--delay" as string]: `${index * 55}ms` }}
+                  >
                     <span className="dexNumber">{String(entry.id).padStart(3, "0")}</span>
                     <img src={entry.sprite} alt="" className="pokemonSprite" />
                     <h3>{entry.name}</h3>

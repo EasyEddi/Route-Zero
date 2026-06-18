@@ -33,12 +33,16 @@ function collectFinalSpecies(chain, finalSpecies = new Set()) {
 function gamesFor(id) {
   const games = [];
 
+  if (id <= 151) {
+    games.push("red", "blue", "yellow");
+  }
+
   if (id <= 251) {
-    games.push("fire-red", "leaf-green");
+    games.push("gold", "silver", "crystal", "fire-red", "leaf-green");
   }
 
   if (id <= 386) {
-    games.push("emerald");
+    games.push("ruby", "sapphire", "emerald");
   }
 
   return games;
