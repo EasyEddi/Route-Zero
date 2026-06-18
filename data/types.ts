@@ -16,4 +16,5 @@ export const pokemonTypes = [
   "dragon",
   "dark",
   "steel",
+  "fairy",
 ] as const;
