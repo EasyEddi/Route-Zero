@@ -72,6 +72,7 @@ export default function Home() {
   const [poolSearch, setPoolSearch] = useState("");
   const [gameSearch, setGameSearch] = useState("");
   const [rollingSlots, setRollingSlots] = useState<PokemonEntry[]>([]);
+  const [shinyCards, setShinyCards] = useState<Record<string, boolean>>({});
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const rollIntervalRef = useRef<number | null>(null);
   const rollTimeoutsRef = useRef<number[]>([]);
@@ -135,6 +136,13 @@ export default function Home() {
     setIsRolling(false);
     setIsRevealing(false);
     setRevealedCount(0);
+    setShinyCards((current) => {
+      return Object.fromEntries(Object.entries(current).filter(([key]) => !key.startsWith("team-")));
+    });
+  }
+
+  function toggleShinyCard(cardKey: string) {
+    setShinyCards((current) => ({ ...current, [cardKey]: !current[cardKey] }));
   }
 
   function updateFilter<Key extends keyof TeamFilters>(key: Key, value: TeamFilters[Key]) {
@@ -370,6 +378,8 @@ export default function Home() {
               {rollingSlots.map((entry, index) => {
                 const revealedEntry = team[index];
                 const isSlotRevealed = revealedEntry !== undefined && index < revealedCount;
+                const cardKey = `team-${index}`;
+                const isShiny = Boolean(shinyCards[cardKey]);
 
                 return (
                   <article
@@ -380,10 +390,23 @@ export default function Home() {
                     <span className="dexNumber">
                       {isSlotRevealed ? String(revealedEntry.id).padStart(3, "0") : "???"}
                     </span>
+                    {isSlotRevealed ? (
+                      <ShinyToggle
+                        active={isShiny}
+                        onClick={() => toggleShinyCard(cardKey)}
+                      />
+                    ) : null}
                     <img
-                      src={isSlotRevealed ? revealedEntry.sprite : entry.sprite}
+                      src={isSlotRevealed ? getPokemonSprite(revealedEntry, isShiny) : entry.sprite}
                       alt=""
-                      className={`pokemonSprite ${isSlotRevealed ? "" : "silhouetteSprite"}`}
+                      className={`pokemonSprite ${isSlotRevealed ? "" : "silhouetteSprite"} ${isShiny ? "shinySprite" : ""}`}
+                      data-shiny={isShiny}
+                      key={`${isSlotRevealed ? revealedEntry.id : entry.id}-${isShiny ? "shiny" : "normal"}`}
+                      onError={(event) => {
+                        if (isShiny && isSlotRevealed) {
+                          event.currentTarget.src = revealedEntry.sprite;
+                        }
+                      }}
                     />
                     <h3>{isSlotRevealed ? revealedEntry.name : "Rolling"}</h3>
                     {isSlotRevealed ? (
@@ -418,13 +441,33 @@ export default function Home() {
             <div className="teamGrid" style={{ ["--card-count" as string]: team.length }}>
               {team.map((entry, index) =>
                 entry ? (
+                  (() => {
+                    const cardKey = `team-${index}`;
+                    const isShiny = Boolean(shinyCards[cardKey]);
+
+                    return (
                   <article
                     className={`pokemonCard ${isRevealing ? "revealedCard" : ""}`}
                     key={`${entry.id}-${index}`}
                     style={{ ["--delay" as string]: `${index * 55}ms` }}
                   >
                     <span className="dexNumber">{String(entry.id).padStart(3, "0")}</span>
-                    <img src={entry.sprite} alt="" className="pokemonSprite" />
+                    <ShinyToggle
+                      active={isShiny}
+                      onClick={() => toggleShinyCard(cardKey)}
+                    />
+                    <img
+                      src={getPokemonSprite(entry, isShiny)}
+                      alt=""
+                      className={`pokemonSprite ${isShiny ? "shinySprite" : ""}`}
+                      data-shiny={isShiny}
+                      key={`${entry.id}-${isShiny ? "shiny" : "normal"}`}
+                      onError={(event) => {
+                        if (isShiny) {
+                          event.currentTarget.src = entry.sprite;
+                        }
+                      }}
+                    />
                     <h3>{entry.name}</h3>
                     <div className="typeList">
                       {entry.types.map((type) => (
@@ -434,6 +477,8 @@ export default function Home() {
                       ))}
                     </div>
                   </article>
+                    );
+                  })()
                 ) : null,
               )}
             </div>
@@ -481,18 +526,40 @@ export default function Home() {
 
             <div className="poolGrid" aria-label="Filtered Pokemon pool">
               {searchedPool.map((entry) => (
-                <article className="poolCard" key={entry.id}>
-                  <span className="poolDex">{String(entry.id).padStart(3, "0")}</span>
-                  <img src={entry.sprite} alt="" />
-                  <h3>{entry.name}</h3>
-                  <div className="typeList">
-                    {entry.types.map((type) => (
-                      <span className="typeBadge compactBadge" data-type={type} key={type}>
-                        {typeLabels[type]}
-                      </span>
-                    ))}
-                  </div>
-                </article>
+                (() => {
+                  const cardKey = `pool-${entry.id}`;
+                  const isShiny = Boolean(shinyCards[cardKey]);
+
+                  return (
+                    <article className="poolCard" key={entry.id}>
+                      <span className="poolDex">{String(entry.id).padStart(3, "0")}</span>
+                      <ShinyToggle
+                        active={isShiny}
+                        onClick={() => toggleShinyCard(cardKey)}
+                      />
+                      <img
+                        src={getPokemonSprite(entry, isShiny)}
+                        alt=""
+                        className={isShiny ? "shinySprite" : undefined}
+                        data-shiny={isShiny}
+                        key={`${entry.id}-${isShiny ? "shiny" : "normal"}`}
+                        onError={(event) => {
+                          if (isShiny) {
+                            event.currentTarget.src = entry.sprite;
+                          }
+                        }}
+                      />
+                      <h3>{entry.name}</h3>
+                      <div className="typeList">
+                        {entry.types.map((type) => (
+                          <span className="typeBadge compactBadge" data-type={type} key={type}>
+                            {typeLabels[type]}
+                          </span>
+                        ))}
+                      </div>
+                    </article>
+                  );
+                })()
               ))}
             </div>
           </section>
@@ -592,6 +659,34 @@ export default function Home() {
 
 function getRandomSlots(pool: PokemonEntry[], size: number) {
   return Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
+}
+
+function getPokemonSprite(entry: PokemonEntry, shiny: boolean) {
+  if (!shiny) {
+    return entry.sprite;
+  }
+
+  return entry.sprite.replace("/official-artwork/", "/official-artwork/shiny/");
+}
+
+type ShinyToggleProps = {
+  active: boolean;
+  onClick: () => void;
+};
+
+function ShinyToggle({ active, onClick }: ShinyToggleProps) {
+  return (
+    <button
+      className="shinyToggle"
+      type="button"
+      data-active={active}
+      onClick={onClick}
+      aria-label={active ? "Show normal Pokemon artwork" : "Show shiny Pokemon artwork"}
+      title={active ? "Show normal" : "Show shiny"}
+    >
+      <Sparkles size={17} />
+    </button>
+  );
 }
 
 type ToggleRowProps = {

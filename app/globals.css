@@ -850,12 +850,78 @@ button {
   text-shadow: none;
 }
 
+.shinyToggle {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #d6def0;
+  background: rgba(8, 17, 31, 0.72);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.shinyToggle:hover {
+  color: #fff7c5;
+  border-color: rgba(255, 226, 95, 0.5);
+  transform: scale(1.06);
+}
+
+.shinyToggle[data-active="true"] {
+  color: #1b1630;
+  border-color: rgba(255, 233, 118, 0.84);
+  background:
+    radial-gradient(circle at 32% 24%, #fff9cf, transparent 38%),
+    linear-gradient(180deg, #ffe978, #f4b83b);
+  box-shadow:
+    0 0 0 3px rgba(255, 224, 92, 0.18),
+    0 14px 30px rgba(241, 183, 56, 0.28);
+}
+
+.appRoot[data-theme="light"] .shinyToggle {
+  border-color: rgba(28, 42, 64, 0.12);
+  color: #59687e;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 12px 24px rgba(30, 45, 73, 0.14);
+}
+
+.appRoot[data-theme="light"] .shinyToggle:hover,
+.appRoot[data-theme="light"] .shinyToggle[data-active="true"] {
+  color: #1b1630;
+  border-color: rgba(218, 164, 30, 0.38);
+  background:
+    radial-gradient(circle at 32% 24%, #fff9cf, transparent 38%),
+    linear-gradient(180deg, #ffe978, #f4b83b);
+}
+
 .pokemonSprite {
   width: min(220px, 82%);
   height: 185px;
   margin-top: 18px;
   object-fit: contain;
   filter: drop-shadow(0 20px 22px rgba(0, 0, 0, 0.36));
+}
+
+.pokemonSprite[data-shiny="true"],
+.poolCard img[data-shiny="true"] {
+  animation: shinySwap 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pokemonSprite[data-shiny="false"],
+.poolCard img[data-shiny="false"] {
+  animation: spriteSwap 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .silhouetteSprite {
@@ -1262,6 +1328,13 @@ button {
   filter: drop-shadow(0 16px 16px rgba(0, 0, 0, 0.34));
 }
 
+.poolCard .shinyToggle {
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+}
+
 .poolCard h3 {
   margin: 4px 0 10px;
   font-size: 1.08rem;
@@ -1327,6 +1400,35 @@ button {
   }
   100% {
     filter: drop-shadow(0 20px 22px rgba(0, 0, 0, 0.36));
+    transform: scale(1);
+  }
+}
+
+@keyframes shinySwap {
+  0% {
+    opacity: 0;
+    filter: brightness(2.5) saturate(0.35) drop-shadow(0 0 30px rgba(255, 242, 126, 0.9));
+    transform: scale(0.86) rotate(-2deg);
+  }
+  42% {
+    opacity: 1;
+    filter: brightness(1.7) saturate(1.35) drop-shadow(0 0 34px rgba(255, 230, 95, 0.78));
+    transform: scale(1.08) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 20px 22px rgba(0, 0, 0, 0.36));
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes spriteSwap {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.94);
+  }
+  100% {
+    opacity: 1;
     transform: scale(1);
   }
 }
