@@ -192,11 +192,6 @@ export default function Home() {
     }, 95);
 
     const rollTimeout = window.setTimeout(() => {
-      if (rollIntervalRef.current !== null) {
-        window.clearInterval(rollIntervalRef.current);
-        rollIntervalRef.current = null;
-      }
-
       setIsRolling(false);
       setIsRevealing(true);
       setTeamIds(result.team.map((entry) => entry.id));
@@ -205,6 +200,11 @@ export default function Home() {
         rollTimeoutsRef.current.push(revealTimeout);
       });
       const completeTimeout = window.setTimeout(() => {
+        if (rollIntervalRef.current !== null) {
+          window.clearInterval(rollIntervalRef.current);
+          rollIntervalRef.current = null;
+        }
+
         setIsRevealing(false);
       }, result.team.length * 180 + 760);
       rollTimeoutsRef.current.push(completeTimeout);
