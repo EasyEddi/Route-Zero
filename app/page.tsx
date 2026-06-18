@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Ban,
   Copy,
@@ -69,6 +69,8 @@ export default function Home() {
   const [gameSearch, setGameSearch] = useState("");
   const [rollingSlots, setRollingSlots] = useState<PokemonEntry[]>([]);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const rollIntervalRef = useRef<number | null>(null);
+  const rollTimeoutsRef = useRef<number[]>([]);
 
   const selectedGame = games.find((game) => game.id === filters.gameId);
   const team = useMemo(
@@ -102,6 +104,35 @@ export default function Home() {
     return games.filter((game) => game.name.toLowerCase().includes(query) || game.shortName.toLowerCase().includes(query));
   }, [gameSearch]);
 
+  useEffect(() => {
+    return () => {
+      if (rollIntervalRef.current !== null) {
+        window.clearInterval(rollIntervalRef.current);
+      }
+
+      rollTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    };
+  }, []);
+
+  function clearRollTimers() {
+    if (rollIntervalRef.current !== null) {
+      window.clearInterval(rollIntervalRef.current);
+      rollIntervalRef.current = null;
+    }
+
+    rollTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    rollTimeoutsRef.current = [];
+  }
+
+  function clearRolledTeam() {
+    clearRollTimers();
+    setTeamIds([]);
+    setRollingSlots([]);
+    setIsRolling(false);
+    setIsRevealing(false);
+    setRevealedCount(0);
+  }
+
   function updateFilter<Key extends keyof TeamFilters>(key: Key, value: TeamFilters[Key]) {
     setFilters((current) => ({ ...current, [key]: value }));
   }
@@ -120,7 +151,7 @@ export default function Home() {
 
   function selectGame(gameId: string) {
     updateFilter("gameId", gameId);
-    setTeamIds([]);
+    clearRolledTeam();
     setError(null);
     setGameSearch("");
     setIsGameOpen(false);
@@ -128,12 +159,14 @@ export default function Home() {
 
   function selectTeamSize(teamSize: number) {
     updateFilter("teamSize", teamSize);
-    setTeamIds([]);
+    clearRolledTeam();
     setError(null);
     setIsTeamSizeOpen(false);
   }
 
   function handleRoll() {
+    clearRollTimers();
+
     const result = rollTeam(filters, pokemon);
     const pool = applyFilters(filters, pokemon);
 
@@ -154,32 +187,35 @@ export default function Home() {
     setTeamIds([]);
     setRollingSlots(getRandomSlots(pool, filters.teamSize));
 
-    const interval = window.setInterval(() => {
+    rollIntervalRef.current = window.setInterval(() => {
       setRollingSlots(getRandomSlots(pool, filters.teamSize));
     }, 95);
 
-    window.setTimeout(() => {
-      window.clearInterval(interval);
+    const rollTimeout = window.setTimeout(() => {
+      if (rollIntervalRef.current !== null) {
+        window.clearInterval(rollIntervalRef.current);
+        rollIntervalRef.current = null;
+      }
+
       setIsRolling(false);
       setIsRevealing(true);
       setTeamIds(result.team.map((entry) => entry.id));
       result.team.forEach((_, index) => {
-        window.setTimeout(() => setRevealedCount(index + 1), index * 180);
+        const revealTimeout = window.setTimeout(() => setRevealedCount(index + 1), index * 180);
+        rollTimeoutsRef.current.push(revealTimeout);
       });
-      window.setTimeout(() => {
+      const completeTimeout = window.setTimeout(() => {
         setIsRevealing(false);
       }, result.team.length * 180 + 760);
+      rollTimeoutsRef.current.push(completeTimeout);
     }, 1700);
+    rollTimeoutsRef.current.push(rollTimeout);
   }
 
   function resetFilters() {
     setFilters(defaultFilters);
     setError(null);
-    setTeamIds([]);
-    setRollingSlots([]);
-    setIsRolling(false);
-    setIsRevealing(false);
-    setRevealedCount(0);
+    clearRolledTeam();
   }
 
   return (
@@ -311,7 +347,7 @@ export default function Home() {
 
           {error ? <div className="message error">{error}</div> : null}
 
-          {isRolling || rollingSlots.length > 0 ? (
+          {isRolling || (rollingSlots.length > 0 && team.length > 0) ? (
             <div className="teamGrid rollingGrid" aria-label="Rolling Pokemon silhouettes">
               {rollingSlots.map((entry, index) => {
                 const revealedEntry = team[index];
