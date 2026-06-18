@@ -840,9 +840,10 @@ button {
 
 .gameCard {
   display: grid;
+  grid-template-rows: 214px minmax(2.4em, auto);
   gap: 12px;
   justify-items: stretch;
-  min-height: 214px;
+  min-height: 280px;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -862,7 +863,7 @@ button {
 .gameCover {
   position: relative;
   display: grid;
-  min-height: 190px;
+  min-height: 214px;
   place-items: center;
   padding: 8px;
   overflow: hidden;
@@ -875,7 +876,7 @@ button {
   z-index: 1;
   width: auto;
   max-width: 100%;
-  max-height: 176px;
+  max-height: 198px;
   object-fit: contain;
   border-radius: 6px;
   box-shadow: 0 14px 24px rgba(0, 0, 0, 0.38);
@@ -918,6 +919,7 @@ button {
 .gameName {
   display: block;
   min-height: 2.3em;
+  align-self: start;
   color: #f4f7ff;
   font-weight: 900;
   line-height: 1.15;
