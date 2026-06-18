@@ -586,17 +586,18 @@ type ToggleRowProps = {
 
 function ToggleRow({ icon, label, description, checked, onChange }: ToggleRowProps) {
   return (
-    <label className="toggleRow">
+    <button
+      className="toggleRow"
+      type="button"
+      aria-pressed={checked}
+      onClick={() => onChange(!checked)}
+    >
       <span className="settingIcon" aria-hidden="true">{icon}</span>
       <span>
         <strong>{label}</strong>
         <small>{description}</small>
       </span>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-      />
-    </label>
+      <span className="switchControl" data-checked={checked} aria-hidden="true" />
+    </button>
   );
 }
