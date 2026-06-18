@@ -190,6 +190,35 @@ export default function Home() {
     });
   }
 
+  function warmPoolShinySprites() {
+    searchedPool.forEach((entry) => warmShinySprite(entry));
+  }
+
+  function togglePoolShinyCards() {
+    const allShiny = searchedPool.length > 0 && searchedPool.every((entry) => shinyCards[`pool-${entry.id}`]);
+
+    if (allShiny) {
+      setShinyCards((current) => {
+        const next = { ...current };
+        searchedPool.forEach((entry) => {
+          next[`pool-${entry.id}`] = false;
+        });
+        return next;
+      });
+      return;
+    }
+
+    void Promise.all(searchedPool.map((entry) => preloadPokemonSprite(entry))).then(() => {
+      setShinyCards((current) => {
+        const next = { ...current };
+        searchedPool.forEach((entry) => {
+          next[`pool-${entry.id}`] = true;
+        });
+        return next;
+      });
+    });
+  }
+
   function updateFilter<Key extends keyof TeamFilters>(key: Key, value: TeamFilters[Key]) {
     setFilters((current) => ({ ...current, [key]: value }));
   }
@@ -574,9 +603,24 @@ export default function Home() {
                 <h2 id="pool-title">Pokemon pool</h2>
                 <span>{searchedPool.length} of {currentPool.length} Pokemon shown</span>
               </div>
-              <button className="modalCloseButton" type="button" onClick={() => setIsPoolOpen(false)} aria-label="Close pool">
-                <X size={24} />
-              </button>
+              <div className="poolHeaderActions">
+                <button
+                  className="teamShinyButton poolShinyButton"
+                  type="button"
+                  data-active={searchedPool.length > 0 && searchedPool.every((entry) => shinyCards[`pool-${entry.id}`])}
+                  onClick={togglePoolShinyCards}
+                  onFocus={warmPoolShinySprites}
+                  onPointerEnter={warmPoolShinySprites}
+                  disabled={searchedPool.length === 0}
+                  aria-label="Toggle shiny artwork for the visible Pokemon pool"
+                  title="Toggle visible pool shiny"
+                >
+                  <Sparkles size={20} />
+                </button>
+                <button className="modalCloseButton" type="button" onClick={() => setIsPoolOpen(false)} aria-label="Close pool">
+                  <X size={24} />
+                </button>
+              </div>
             </div>
 
             <label className="poolSearch">
