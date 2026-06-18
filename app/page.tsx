@@ -141,8 +141,19 @@ export default function Home() {
     });
   }
 
-  function toggleShinyCard(cardKey: string) {
-    setShinyCards((current) => ({ ...current, [cardKey]: !current[cardKey] }));
+  function warmShinySprite(entry: PokemonEntry) {
+    void preloadPokemonSprite(entry);
+  }
+
+  function toggleShinyCard(cardKey: string, entry: PokemonEntry) {
+    if (shinyCards[cardKey]) {
+      setShinyCards((current) => ({ ...current, [cardKey]: false }));
+      return;
+    }
+
+    void preloadPokemonSprite(entry).then(() => {
+      setShinyCards((current) => ({ ...current, [cardKey]: true }));
+    });
   }
 
   function updateFilter<Key extends keyof TeamFilters>(key: Key, value: TeamFilters[Key]) {
@@ -393,7 +404,8 @@ export default function Home() {
                     {isSlotRevealed ? (
                       <ShinyToggle
                         active={isShiny}
-                        onClick={() => toggleShinyCard(cardKey)}
+                        onClick={() => toggleShinyCard(cardKey, revealedEntry)}
+                        onWarmup={() => warmShinySprite(revealedEntry)}
                       />
                     ) : null}
                     <img
@@ -454,7 +466,8 @@ export default function Home() {
                     <span className="dexNumber">{String(entry.id).padStart(3, "0")}</span>
                     <ShinyToggle
                       active={isShiny}
-                      onClick={() => toggleShinyCard(cardKey)}
+                      onClick={() => toggleShinyCard(cardKey, entry)}
+                      onWarmup={() => warmShinySprite(entry)}
                     />
                     <img
                       src={getPokemonSprite(entry, isShiny)}
@@ -535,7 +548,8 @@ export default function Home() {
                       <span className="poolDex">{String(entry.id).padStart(3, "0")}</span>
                       <ShinyToggle
                         active={isShiny}
-                        onClick={() => toggleShinyCard(cardKey)}
+                        onClick={() => toggleShinyCard(cardKey, entry)}
+                        onWarmup={() => warmShinySprite(entry)}
                       />
                       <img
                         src={getPokemonSprite(entry, isShiny)}
@@ -669,18 +683,42 @@ function getPokemonSprite(entry: PokemonEntry, shiny: boolean) {
   return entry.sprite.replace("/official-artwork/", "/official-artwork/shiny/");
 }
 
+const spritePreloadCache = new Map<string, Promise<void>>();
+
+function preloadPokemonSprite(entry: PokemonEntry) {
+  const sprite = getPokemonSprite(entry, true);
+  const cached = spritePreloadCache.get(sprite);
+
+  if (cached) {
+    return cached;
+  }
+
+  const preload = new Promise<void>((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve();
+    image.onerror = () => resolve();
+    image.src = sprite;
+  });
+
+  spritePreloadCache.set(sprite, preload);
+  return preload;
+}
+
 type ShinyToggleProps = {
   active: boolean;
   onClick: () => void;
+  onWarmup: () => void;
 };
 
-function ShinyToggle({ active, onClick }: ShinyToggleProps) {
+function ShinyToggle({ active, onClick, onWarmup }: ShinyToggleProps) {
   return (
     <button
       className="shinyToggle"
       type="button"
       data-active={active}
       onClick={onClick}
+      onFocus={onWarmup}
+      onPointerEnter={onWarmup}
       aria-label={active ? "Show normal Pokemon artwork" : "Show shiny Pokemon artwork"}
       title={active ? "Show normal" : "Show shiny"}
     >
