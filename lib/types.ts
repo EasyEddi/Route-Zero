@@ -4,6 +4,7 @@ export type PokemonEntry = {
   types: string[];
   sprite: string;
   games: string[];
+  nativeGames: string[];
   fullyEvolved: boolean;
   eventOnly: boolean;
   tradeOnly: boolean;

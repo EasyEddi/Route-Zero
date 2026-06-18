@@ -38,6 +38,10 @@ export function applyFilters(filters: TeamFilters, entries: PokemonEntry[]) {
       return false;
     }
 
+    if (!filters.allowTradePokemon && !pokemon.nativeGames.includes(filters.gameId)) {
+      return false;
+    }
+
     if (!filters.allowRoamingPokemon && pokemon.roaming) {
       return false;
     }
