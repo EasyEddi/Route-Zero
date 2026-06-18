@@ -59,6 +59,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isRolling, setIsRolling] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
+  const [revealedCount, setRevealedCount] = useState(0);
   const [isPoolOpen, setIsPoolOpen] = useState(false);
   const [isGameOpen, setIsGameOpen] = useState(false);
   const [isTeamSizeOpen, setIsTeamSizeOpen] = useState(false);
@@ -139,11 +140,13 @@ export default function Home() {
       setRollingSlots([]);
       setIsRolling(false);
       setIsRevealing(false);
+      setRevealedCount(0);
       return;
     }
 
     setIsRolling(true);
     setIsRevealing(false);
+    setRevealedCount(0);
     setError(null);
     setTeamIds([]);
     setRollingSlots(getRandomSlots(pool, filters.teamSize));
@@ -155,10 +158,15 @@ export default function Home() {
     window.setTimeout(() => {
       window.clearInterval(interval);
       setIsRolling(false);
-      setRollingSlots([]);
       setIsRevealing(true);
       setTeamIds(result.team.map((entry) => entry.id));
-      window.setTimeout(() => setIsRevealing(false), 820);
+      result.team.forEach((_, index) => {
+        window.setTimeout(() => setRevealedCount(index + 1), index * 180);
+      });
+      window.setTimeout(() => {
+        setRollingSlots([]);
+        setIsRevealing(false);
+      }, result.team.length * 180 + 820);
     }, 1700);
   }
 
@@ -169,6 +177,7 @@ export default function Home() {
     setRollingSlots([]);
     setIsRolling(false);
     setIsRevealing(false);
+    setRevealedCount(0);
   }
 
   return (
@@ -289,23 +298,44 @@ export default function Home() {
 
           {error ? <div className="message error">{error}</div> : null}
 
-          {isRolling ? (
+          {isRolling || isRevealing ? (
             <div className="teamGrid rollingGrid" aria-label="Rolling Pokemon silhouettes">
-              {rollingSlots.map((entry, index) => (
-                <article
-                  className="pokemonCard rollingCard"
-                  key={index}
-                  style={{ ["--delay" as string]: `${index * 120}ms` }}
-                >
-                  <span className="dexNumber">???</span>
-                  <img src={entry.sprite} alt="" className="pokemonSprite silhouetteSprite" />
-                  <h3>Rolling</h3>
-                  <div className="slotBars" aria-hidden="true">
-                    <span />
-                    <span />
-                  </div>
-                </article>
-              ))}
+              {rollingSlots.map((entry, index) => {
+                const revealedEntry = team[index];
+                const isSlotRevealed = isRevealing && revealedEntry && index < revealedCount;
+
+                return (
+                  <article
+                    className={`pokemonCard rollingCard ${isSlotRevealed ? "revealedCard revealSequenceCard" : ""}`}
+                    key={index}
+                    style={{ ["--delay" as string]: `${index * 120}ms` }}
+                  >
+                    <span className="dexNumber">
+                      {isSlotRevealed ? String(revealedEntry.id).padStart(3, "0") : "???"}
+                    </span>
+                    <img
+                      src={isSlotRevealed ? revealedEntry.sprite : entry.sprite}
+                      alt=""
+                      className={`pokemonSprite ${isSlotRevealed ? "" : "silhouetteSprite"}`}
+                    />
+                    <h3>{isSlotRevealed ? revealedEntry.name : "Rolling"}</h3>
+                    {isSlotRevealed ? (
+                      <div className="typeList">
+                        {revealedEntry.types.map((type) => (
+                          <span className="typeBadge" data-type={type} key={type}>
+                            {typeLabels[type]}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="slotBars" aria-hidden="true">
+                        <span />
+                        <span />
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           ) : null}
 
@@ -317,7 +347,7 @@ export default function Home() {
             </div>
           ) : null}
 
-          {team.length > 0 && !isRolling ? (
+          {team.length > 0 && !isRolling && !isRevealing ? (
             <div className="teamGrid" style={{ ["--card-count" as string]: team.length }}>
               {team.map((entry, index) =>
                 entry ? (
