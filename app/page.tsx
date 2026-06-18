@@ -9,7 +9,6 @@ import {
   Gamepad2,
   Search,
   X,
-  Menu,
   Mountain,
   RotateCcw,
   Settings,
@@ -24,7 +23,7 @@ import { applyFilters, rollTeam } from "@/lib/team-generator";
 import type { PokemonEntry, TeamFilters } from "@/lib/types";
 
 const defaultFilters: TeamFilters = {
-  gameId: "fire-red",
+  gameId: "",
   teamSize: 6,
   bannedTypes: [],
   fullyEvolvedOnly: false,
@@ -64,7 +63,7 @@ export default function Home() {
   const [poolSearch, setPoolSearch] = useState("");
   const [rollingSlots, setRollingSlots] = useState<PokemonEntry[]>([]);
 
-  const selectedGame = games.find((game) => game.id === filters.gameId) ?? games[0];
+  const selectedGame = games.find((game) => game.id === filters.gameId);
   const team = useMemo(
     () => teamIds.map((id) => pokemon.find((entry) => entry.id === id)).filter(Boolean),
     [teamIds],
@@ -159,9 +158,6 @@ export default function Home() {
           <span className="brandMark" aria-hidden="true" />
           <span>ROUTE ZERO</span>
         </div>
-        <button className="iconButton" aria-label="Menu">
-          <Menu size={25} />
-        </button>
       </header>
 
       <section className="heroGrid">
@@ -169,8 +165,8 @@ export default function Home() {
           <div className="intro">
             <div className="pokeballGlow" aria-hidden="true" />
             <h1 id="setup-title">Ready for your adventure?</h1>
-            <p>Create a random team plan for your next story run.</p>
-            <button className="primaryButton" type="button" onClick={handleRoll} disabled={isRolling}>
+            <p>Create a random team for your next story run.</p>
+            <button className="primaryButton" type="button" onClick={handleRoll} disabled={isRolling || !filters.gameId}>
               <Dice5 size={26} className={isRolling ? "spinIcon" : undefined} />
               {isRolling ? "Rolling..." : "Roll team"}
             </button>
@@ -189,6 +185,7 @@ export default function Home() {
                 value={filters.gameId}
                 onChange={(event) => updateFilter("gameId", event.target.value)}
               >
+                <option value="">Select a game</option>
                 {games.map((game) => (
                   <option key={game.id} value={game.id}>
                     {game.name}
@@ -201,13 +198,17 @@ export default function Home() {
               <Users className="settingIcon" size={22} />
               <span className="settingLabel">Team size</span>
               <div className="stepper" aria-label="Team size">
-                <button type="button" onClick={() => changeTeamSize(-1)} aria-label="Decrease team size">
-                  -
-                </button>
+                {filters.teamSize > 1 ? (
+                  <button type="button" onClick={() => changeTeamSize(-1)} aria-label="Decrease team size">
+                    -
+                  </button>
+                ) : null}
                 <strong>{filters.teamSize}</strong>
-                <button type="button" onClick={() => changeTeamSize(1)} aria-label="Increase team size">
-                  +
-                </button>
+                {filters.teamSize < 6 ? (
+                  <button type="button" onClick={() => changeTeamSize(1)} aria-label="Increase team size">
+                    +
+                  </button>
+                ) : null}
               </div>
             </div>
 
@@ -265,8 +266,12 @@ export default function Home() {
             </div>
 
             <div className="settingsFooter">
-              <span>{availableCount} Pokemon in the pool for {selectedGame.shortName}</span>
-              <button type="button" onClick={() => setIsPoolOpen(true)}>
+              <span>
+                {filters.gameId && selectedGame
+                  ? `${availableCount} Pokemon in the pool for ${selectedGame.shortName}`
+                  : "Select a game to see the Pokemon pool"}
+              </span>
+              <button type="button" onClick={() => setIsPoolOpen(true)} disabled={!filters.gameId}>
                 <Eye size={17} />
                 View pool
               </button>
@@ -279,7 +284,7 @@ export default function Home() {
 
         <section className="teamPanel" aria-live="polite">
           <div className="teamHeader">
-            <p>{selectedGame.name}</p>
+            <p>{selectedGame?.name ?? "No game selected"}</p>
             <h2>Your rolled team</h2>
             <span>Good luck on your adventure!</span>
           </div>
@@ -339,17 +344,19 @@ export default function Home() {
             </div>
           ) : null}
 
-          <div className="actionBar">
-            <button
-              className="primaryButton slim"
-              type="button"
-              onClick={() => navigator.clipboard?.writeText(team.map((entry) => entry?.name).join(", "))}
-              disabled={team.length === 0 || isRolling}
-            >
-              <Copy size={21} />
-              Copy team
-            </button>
-          </div>
+          {team.length > 0 ? (
+            <div className="actionBar">
+              <button
+                className="primaryButton slim"
+                type="button"
+                onClick={() => navigator.clipboard?.writeText(team.map((entry) => entry?.name).join(", "))}
+                disabled={isRolling}
+              >
+                <Copy size={21} />
+                Copy team
+              </button>
+            </div>
+          ) : null}
         </section>
       </section>
 
@@ -358,7 +365,7 @@ export default function Home() {
           <section className="poolModal">
             <div className="poolModalHeader">
               <div>
-                <p>{selectedGame.name}</p>
+                <p>{selectedGame?.name ?? "No game selected"}</p>
                 <h2 id="pool-title">Pokemon pool</h2>
                 <span>{searchedPool.length} of {currentPool.length} Pokemon shown</span>
               </div>

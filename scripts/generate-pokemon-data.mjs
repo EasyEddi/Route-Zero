@@ -1,10 +1,14 @@
 import { writeFile } from "node:fs/promises";
 
 const POKEAPI = "https://pokeapi.co/api/v2";
-const MAX_ID = 386;
+const FALLBACK_MAX_ID = 1025;
 
-const tradeOnlyIds = new Set([65, 68, 76, 94, 186, 199, 208, 212, 230, 233, 242]);
-const eventOnlyIds = new Set([151, 251, 385, 386]);
+const tradeOnlyIds = new Set([
+  65, 68, 76, 94, 186, 199, 208, 212, 230, 233, 242, 464, 466, 467, 474, 477, 526, 534, 589, 617, 683, 685, 709, 711,
+]);
+const eventOnlyIds = new Set([
+  151, 251, 385, 386, 489, 490, 491, 492, 493, 494, 647, 648, 649, 719, 720, 721, 801, 802, 807, 808, 809, 893,
+]);
 const roamingIds = new Set([243, 244, 245, 380, 381]);
 const versionMap = new Map([
   ["red", "red"],
@@ -18,14 +22,41 @@ const versionMap = new Map([
   ["emerald", "emerald"],
   ["firered", "fire-red"],
   ["leafgreen", "leaf-green"],
+  ["diamond", "diamond"],
+  ["pearl", "pearl"],
+  ["platinum", "platinum"],
+  ["heartgold", "heart-gold"],
+  ["soulsilver", "soul-silver"],
+  ["black", "black"],
+  ["white", "white"],
+  ["black-2", "black-2"],
+  ["white-2", "white-2"],
+  ["x", "x"],
+  ["y", "y"],
+  ["omega-ruby", "omega-ruby"],
+  ["alpha-sapphire", "alpha-sapphire"],
+  ["sun", "sun"],
+  ["moon", "moon"],
+  ["ultra-sun", "ultra-sun"],
+  ["ultra-moon", "ultra-moon"],
+  ["lets-go-pikachu", "lets-go-pikachu"],
+  ["lets-go-eevee", "lets-go-eevee"],
+  ["sword", "sword"],
+  ["shield", "shield"],
+  ["brilliant-diamond", "brilliant-diamond"],
+  ["shining-pearl", "shining-pearl"],
+  ["legends-arceus", "legends-arceus"],
+  ["scarlet", "scarlet"],
+  ["violet", "violet"],
+  ["legends-za", "legends-za"],
 ]);
 
 const manualNativeGamesById = new Map([
   [1, ["red", "blue", "fire-red", "leaf-green"]],
   [4, ["red", "blue", "fire-red", "leaf-green"]],
   [7, ["red", "blue", "fire-red", "leaf-green"]],
-  [25, ["yellow"]],
-  [133, ["red", "blue", "yellow", "fire-red", "leaf-green"]],
+  [25, ["yellow", "lets-go-pikachu"]],
+  [133, ["red", "blue", "yellow", "fire-red", "leaf-green", "lets-go-eevee"]],
   [138, ["red", "blue", "yellow", "fire-red", "leaf-green"]],
   [140, ["red", "blue", "yellow", "fire-red", "leaf-green"]],
   [142, ["red", "blue", "yellow", "fire-red", "leaf-green"]],
@@ -35,6 +66,34 @@ const manualNativeGamesById = new Map([
   [252, ["ruby", "sapphire", "emerald"]],
   [255, ["ruby", "sapphire", "emerald"]],
   [258, ["ruby", "sapphire", "emerald"]],
+  [387, ["diamond", "pearl", "platinum", "brilliant-diamond", "shining-pearl"]],
+  [390, ["diamond", "pearl", "platinum", "brilliant-diamond", "shining-pearl"]],
+  [393, ["diamond", "pearl", "platinum", "brilliant-diamond", "shining-pearl"]],
+  [495, ["black", "white", "black-2", "white-2"]],
+  [498, ["black", "white", "black-2", "white-2"]],
+  [501, ["black", "white", "black-2", "white-2", "legends-arceus"]],
+  [650, ["x", "y"]],
+  [653, ["x", "y"]],
+  [656, ["x", "y"]],
+  [722, ["sun", "moon", "ultra-sun", "ultra-moon", "legends-arceus"]],
+  [725, ["sun", "moon", "ultra-sun", "ultra-moon"]],
+  [728, ["sun", "moon", "ultra-sun", "ultra-moon"]],
+  [810, ["sword", "shield"]],
+  [813, ["sword", "shield"]],
+  [816, ["sword", "shield"]],
+  [906, ["scarlet", "violet"]],
+  [909, ["scarlet", "violet"]],
+  [912, ["scarlet", "violet"]],
+]);
+const nativeFallbackGameIds = new Set([
+  "sword",
+  "shield",
+  "brilliant-diamond",
+  "shining-pearl",
+  "legends-arceus",
+  "scarlet",
+  "violet",
+  "legends-za",
 ]);
 
 async function fetchJson(url) {
@@ -45,6 +104,17 @@ async function fetchJson(url) {
   }
 
   return response.json();
+}
+
+async function fetchAllInBatches(items, mapper, batchSize = 80) {
+  const results = [];
+
+  for (let index = 0; index < items.length; index += batchSize) {
+    const batch = items.slice(index, index + batchSize);
+    results.push(...(await Promise.all(batch.map(mapper))));
+  }
+
+  return results;
 }
 
 function collectChainSpecies(chain, chainSpecies = []) {
@@ -85,6 +155,42 @@ function gamesFor(id) {
     games.push("ruby", "sapphire", "emerald");
   }
 
+  if (id <= 493) {
+    games.push("diamond", "pearl", "platinum", "heart-gold", "soul-silver", "brilliant-diamond", "shining-pearl");
+  }
+
+  if (id <= 649) {
+    games.push("black", "white", "black-2", "white-2");
+  }
+
+  if (id <= 721) {
+    games.push("x", "y", "omega-ruby", "alpha-sapphire");
+  }
+
+  if (id <= 807) {
+    games.push("sun", "moon", "ultra-sun", "ultra-moon");
+  }
+
+  if (id <= 151 || id === 808 || id === 809) {
+    games.push("lets-go-pikachu", "lets-go-eevee");
+  }
+
+  if (id <= 898) {
+    games.push("sword", "shield");
+  }
+
+  if (id <= 905) {
+    games.push("legends-arceus");
+  }
+
+  if (id <= 1025) {
+    games.push("scarlet", "violet");
+  }
+
+  if (id <= 1025) {
+    games.push("legends-za");
+  }
+
   return games;
 }
 
@@ -117,12 +223,16 @@ function formatEntry(entry) {
 }
 
 async function main() {
-  const speciesList = await Promise.all(
-    Array.from({ length: MAX_ID }, (_, index) => fetchJson(`${POKEAPI}/pokemon-species/${index + 1}`)),
+  const speciesCountResponse = await fetchJson(`${POKEAPI}/pokemon-species?limit=1`);
+  const maxId = Math.min(speciesCountResponse.count || FALLBACK_MAX_ID, FALLBACK_MAX_ID);
+  const pokemonIds = Array.from({ length: maxId }, (_, index) => index + 1);
+  const speciesList = await fetchAllInBatches(
+    pokemonIds,
+    (id) => fetchJson(`${POKEAPI}/pokemon-species/${id}`),
   );
 
   const evolutionUrls = [...new Set(speciesList.map((species) => species.evolution_chain.url))];
-  const evolutionChains = await Promise.all(evolutionUrls.map((url) => fetchJson(url)));
+  const evolutionChains = await fetchAllInBatches(evolutionUrls, (url) => fetchJson(url));
   const finalSpecies = new Set();
   const chainSpeciesBySpecies = new Map();
 
@@ -135,11 +245,11 @@ async function main() {
     }
   }
 
-  const rawEntries = await Promise.all(
-    Array.from({ length: MAX_ID }, async (_, index) => {
-      const id = index + 1;
+  const rawEntries = await fetchAllInBatches(
+    pokemonIds,
+    async (id) => {
       const pokemon = await fetchJson(`${POKEAPI}/pokemon/${id}`);
-      const species = speciesList[index];
+      const species = speciesList[id - 1];
       const encounters = await fetchJson(`${POKEAPI}/pokemon/${id}/encounters`);
       const englishName =
         species.names.find((name) => name.language.name === "en")?.name ?? pokemon.name;
@@ -157,7 +267,7 @@ async function main() {
         tradeOnly: tradeOnlyIds.has(id),
         roaming: roamingIds.has(id),
       };
-    }),
+    },
   );
 
   const nativeGamesBySpecies = new Map(rawEntries.map((entry) => [entry.speciesName, entry.nativeGames]));
@@ -167,6 +277,7 @@ async function main() {
     const nativeGames = mergeGames(
       entry.nativeGames,
       ...chainSpecies.map((chainSpeciesName) => nativeGamesBySpecies.get(chainSpeciesName) ?? []),
+      entry.games.filter((gameId) => nativeFallbackGameIds.has(gameId)),
     ).filter((gameId) => entry.games.includes(gameId));
 
     return {

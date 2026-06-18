@@ -449,6 +449,11 @@ button {
   cursor: pointer;
 }
 
+.settingsFooter button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
 .teamPanel {
   padding: 30px 18px 0;
 }
