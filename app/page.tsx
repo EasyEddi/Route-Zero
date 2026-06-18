@@ -13,13 +13,12 @@ import {
   ShieldCheck,
   Sparkles,
   Users,
-  WandSparkles,
 } from "lucide-react";
 import { games } from "@/data/games";
 import { pokemon } from "@/data/pokemon";
 import { pokemonTypes } from "@/data/types";
-import { rollTeam } from "@/lib/team-generator";
-import type { TeamFilters } from "@/lib/types";
+import { applyFilters, rollTeam } from "@/lib/team-generator";
+import type { PokemonEntry, TeamFilters } from "@/lib/types";
 
 const defaultFilters: TeamFilters = {
   gameId: "fire-red",
@@ -57,6 +56,7 @@ export default function Home() {
   const [teamIds, setTeamIds] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isRolling, setIsRolling] = useState(false);
+  const [rollingSlots, setRollingSlots] = useState<PokemonEntry[]>([]);
 
   const selectedGame = games.find((game) => game.id === filters.gameId) ?? games[0];
   const team = useMemo(
@@ -92,28 +92,40 @@ export default function Home() {
   }
 
   function handleRoll() {
+    const result = rollTeam(filters, pokemon);
+    const pool = applyFilters(filters, pokemon);
+
+    if (!result.ok) {
+      setError(result.message);
+      setTeamIds([]);
+      setRollingSlots([]);
+      setIsRolling(false);
+      return;
+    }
+
     setIsRolling(true);
     setError(null);
+    setTeamIds([]);
+    setRollingSlots(getRandomSlots(pool, filters.teamSize));
+
+    const interval = window.setInterval(() => {
+      setRollingSlots(getRandomSlots(pool, filters.teamSize));
+    }, 95);
 
     window.setTimeout(() => {
-      const result = rollTeam(filters, pokemon);
-
-      if (!result.ok) {
-        setError(result.message);
-        setTeamIds([]);
-        setIsRolling(false);
-        return;
-      }
-
-      setTeamIds(result.team.map((entry) => entry.id));
+      window.clearInterval(interval);
       setIsRolling(false);
-    }, 720);
+      setRollingSlots([]);
+      setTeamIds(result.team.map((entry) => entry.id));
+    }, 1700);
   }
 
   function resetFilters() {
     setFilters(defaultFilters);
     setError(null);
     setTeamIds([]);
+    setRollingSlots([]);
+    setIsRolling(false);
   }
 
   return (
@@ -247,11 +259,22 @@ export default function Home() {
           {error ? <div className="message error">{error}</div> : null}
 
           {isRolling ? (
-            <div className="rollStage">
-              <div className="rollOrb" aria-hidden="true">
-                <WandSparkles size={54} />
-              </div>
-              <strong>Rolling your route...</strong>
+            <div className="teamGrid rollingGrid" aria-label="Rolling Pokemon silhouettes">
+              {rollingSlots.map((entry, index) => (
+                <article
+                  className="pokemonCard rollingCard"
+                  key={index}
+                  style={{ ["--delay" as string]: `${index * 120}ms` }}
+                >
+                  <span className="dexNumber">???</span>
+                  <img src={entry.sprite} alt="" className="pokemonSprite silhouetteSprite" />
+                  <h3>Rolling</h3>
+                  <div className="slotBars" aria-hidden="true">
+                    <span />
+                    <span />
+                  </div>
+                </article>
+              ))}
             </div>
           ) : null}
 
@@ -303,6 +326,10 @@ export default function Home() {
       </section>
     </main>
   );
+}
+
+function getRandomSlots(pool: PokemonEntry[], size: number) {
+  return Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
 }
 
 type ToggleRowProps = {
