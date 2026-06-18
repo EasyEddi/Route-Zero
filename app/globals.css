@@ -47,24 +47,18 @@ body {
   inset: -18vh -16vw;
   content: "";
   background:
-    radial-gradient(circle at 18% 28%, rgba(112, 90, 235, 0.38) 0 9rem, transparent 17rem),
-    radial-gradient(circle at 76% 22%, rgba(43, 144, 199, 0.28) 0 8rem, transparent 16rem),
-    radial-gradient(circle at 58% 78%, rgba(132, 73, 213, 0.32) 0 10rem, transparent 18rem),
-    radial-gradient(circle at 26% 82%, rgba(31, 127, 173, 0.24) 0 7rem, transparent 15rem);
+    radial-gradient(circle at 22% 30%, rgba(112, 90, 235, 0.34) 0 10rem, transparent 19rem),
+    radial-gradient(circle at 74% 72%, rgba(43, 144, 199, 0.25) 0 11rem, transparent 21rem);
   background-size:
-    70rem 54rem,
-    66rem 52rem,
-    76rem 60rem,
-    62rem 50rem;
+    76rem 58rem,
+    78rem 62rem;
   background-position:
-    0% 0%,
-    100% 8%,
-    54% 100%,
-    10% 88%;
+    0% 8%,
+    100% 86%;
   border-radius: 42% 58% 55% 45% / 48% 44% 56% 52%;
-  filter: blur(34px) saturate(1.18);
-  opacity: 0.68;
-  animation: lavaDrift 22s ease-in-out infinite alternate;
+  filter: blur(40px) saturate(1.12);
+  opacity: 0.6;
+  animation: lavaDrift 26s ease-in-out infinite alternate;
   transform: translate3d(0, 0, 0);
   pointer-events: none;
 }
@@ -75,21 +69,18 @@ body {
   inset: -22vh -18vw;
   content: "";
   background:
-    radial-gradient(circle at 64% 34%, rgba(96, 124, 231, 0.24) 0 7rem, transparent 15rem),
-    radial-gradient(circle at 34% 42%, rgba(154, 96, 255, 0.2) 0 8rem, transparent 18rem),
-    radial-gradient(circle at 82% 78%, rgba(50, 168, 184, 0.18) 0 8rem, transparent 17rem);
+    radial-gradient(circle at 64% 28%, rgba(96, 124, 231, 0.2) 0 8rem, transparent 17rem),
+    radial-gradient(circle at 32% 74%, rgba(154, 96, 255, 0.18) 0 9rem, transparent 19rem);
   background-size:
-    58rem 48rem,
-    68rem 56rem,
-    60rem 54rem;
+    62rem 52rem,
+    72rem 58rem;
   background-position:
     84% 18%,
-    18% 52%,
-    92% 92%;
+    14% 82%;
   border-radius: 55% 45% 41% 59% / 43% 58% 42% 57%;
-  filter: blur(42px) saturate(1.12);
-  opacity: 0.5;
-  animation: lavaWarp 28s ease-in-out infinite alternate;
+  filter: blur(48px) saturate(1.08);
+  opacity: 0.42;
+  animation: lavaWarp 32s ease-in-out infinite alternate;
   transform: translate3d(0, 0, 0);
   pointer-events: none;
 }
@@ -112,19 +103,16 @@ body {
 
 .appRoot[data-theme="light"]::before {
   background:
-    radial-gradient(circle at 18% 28%, rgba(139, 121, 238, 0.32) 0 9rem, transparent 17rem),
-    radial-gradient(circle at 76% 22%, rgba(75, 161, 202, 0.22) 0 8rem, transparent 16rem),
-    radial-gradient(circle at 58% 78%, rgba(181, 124, 229, 0.24) 0 10rem, transparent 18rem),
-    radial-gradient(circle at 26% 82%, rgba(84, 175, 198, 0.18) 0 7rem, transparent 15rem);
-  opacity: 0.62;
+    radial-gradient(circle at 22% 30%, rgba(139, 121, 238, 0.28) 0 10rem, transparent 19rem),
+    radial-gradient(circle at 74% 72%, rgba(75, 161, 202, 0.2) 0 11rem, transparent 21rem);
+  opacity: 0.56;
 }
 
 .appRoot[data-theme="light"]::after {
   background:
-    radial-gradient(circle at 64% 34%, rgba(104, 134, 230, 0.2) 0 7rem, transparent 15rem),
-    radial-gradient(circle at 34% 42%, rgba(161, 109, 234, 0.18) 0 8rem, transparent 18rem),
-    radial-gradient(circle at 82% 78%, rgba(77, 173, 190, 0.16) 0 8rem, transparent 17rem);
-  opacity: 0.44;
+    radial-gradient(circle at 64% 28%, rgba(104, 134, 230, 0.17) 0 8rem, transparent 17rem),
+    radial-gradient(circle at 32% 74%, rgba(161, 109, 234, 0.15) 0 9rem, transparent 19rem);
+  opacity: 0.38;
 }
 
 button,
@@ -1844,28 +1832,22 @@ button {
 @keyframes lavaDrift {
   0% {
     background-position:
-      0% 0%,
-      100% 8%,
-      54% 100%,
-      10% 88%;
+      0% 8%,
+      100% 86%;
     border-radius: 42% 58% 55% 45% / 48% 44% 56% 52%;
     transform: translate3d(-2vw, -1vh, 0) scale(1);
   }
   50% {
     background-position:
       18% 16%,
-      82% 22%,
-      44% 82%,
-      28% 74%;
+      82% 74%;
     border-radius: 58% 42% 46% 54% / 42% 57% 43% 58%;
     transform: translate3d(2vw, 1.5vh, 0) scale(1.05);
   }
   100% {
     background-position:
       28% 8%,
-      70% 36%,
-      62% 76%,
-      22% 66%;
+      70% 62%;
     border-radius: 48% 52% 61% 39% / 56% 38% 62% 44%;
     transform: translate3d(1vw, -2vh, 0) scale(1.02);
   }
@@ -1875,24 +1857,21 @@ button {
   0% {
     background-position:
       84% 18%,
-      18% 52%,
-      92% 92%;
+      14% 82%;
     border-radius: 55% 45% 41% 59% / 43% 58% 42% 57%;
     transform: translate3d(1vw, 1vh, 0) scale(1);
   }
   50% {
     background-position:
       70% 32%,
-      30% 38%,
-      76% 76%;
+      30% 66%;
     border-radius: 41% 59% 54% 46% / 56% 38% 62% 44%;
     transform: translate3d(-1.5vw, -1vh, 0) scale(1.06);
   }
   100% {
     background-position:
       62% 42%,
-      42% 24%,
-      68% 84%;
+      42% 58%;
     border-radius: 62% 38% 48% 52% / 44% 62% 38% 56%;
     transform: translate3d(-2vw, 2vh, 0) scale(1.03);
   }
