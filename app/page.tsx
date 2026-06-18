@@ -476,6 +476,7 @@ export default function Home() {
                 return (
                   <article
                     className={`pokemonCard rollingCard ${isSlotRevealed ? "revealedCard revealSequenceCard" : ""}`}
+                    data-shiny={isSlotRevealed ? isShiny : undefined}
                     key={index}
                     style={{ ["--delay" as string]: `${index * 120}ms` }}
                   >
@@ -541,6 +542,7 @@ export default function Home() {
                     return (
                   <article
                     className={`pokemonCard ${isRevealing ? "revealedCard" : ""}`}
+                    data-shiny={isShiny}
                     key={`${entry.id}-${index}`}
                     style={{ ["--delay" as string]: `${index * 55}ms` }}
                   >
@@ -640,7 +642,7 @@ export default function Home() {
                   const isShiny = Boolean(shinyCards[cardKey]);
 
                   return (
-                    <article className="poolCard" key={entry.id}>
+                    <article className="poolCard" data-shiny={isShiny} key={entry.id}>
                       <span className="poolDex">{String(entry.id).padStart(3, "0")}</span>
                       <ShinyToggle
                         active={isShiny}

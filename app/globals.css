@@ -994,7 +994,7 @@ button {
 
 .pokemonSprite[data-shiny="true"],
 .poolCard img[data-shiny="true"] {
-  animation: shinySwap 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: shinySpriteReveal 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .pokemonSprite[data-shiny="false"],
@@ -1011,6 +1011,31 @@ button {
   opacity: 0.88;
   transform-origin: 50% 70%;
   animation: silhouetteTick 190ms steps(2, end) infinite;
+}
+
+.pokemonCard[data-shiny="true"]::before,
+.poolCard[data-shiny="true"]::before {
+  background:
+    radial-gradient(circle at 20% 26%, rgba(255, 246, 153, 0.95) 0 2px, transparent 3px),
+    radial-gradient(circle at 76% 18%, rgba(255, 255, 255, 0.95) 0 3px, transparent 4px),
+    radial-gradient(circle at 84% 62%, rgba(255, 235, 112, 0.92) 0 2px, transparent 3px),
+    radial-gradient(circle at 32% 76%, rgba(255, 255, 255, 0.9) 0 2px, transparent 3px),
+    radial-gradient(circle at 52% 36%, rgba(255, 255, 255, 0.92), rgba(255, 227, 92, 0.34) 30%, transparent 62%);
+  mix-blend-mode: screen;
+  animation: shinySlotFlash 620ms ease-out both;
+}
+
+.pokemonCard[data-shiny="true"]::after,
+.poolCard[data-shiny="true"]::after {
+  background:
+    linear-gradient(45deg, transparent 45%, rgba(255, 249, 187, 0.95) 48%, rgba(255, 249, 187, 0.95) 52%, transparent 55%),
+    linear-gradient(-45deg, transparent 45%, rgba(255, 249, 187, 0.95) 48%, rgba(255, 249, 187, 0.95) 52%, transparent 55%);
+  width: 18px;
+  height: 18px;
+  inset: 22% auto auto 72%;
+  border-radius: 999px;
+  opacity: 0;
+  animation: shinyStarPop 680ms ease-out both;
 }
 
 .pokemonCard h3 {
@@ -1403,6 +1428,27 @@ button {
     linear-gradient(180deg, rgba(18, 31, 51, 0.86), rgba(10, 18, 31, 0.9));
 }
 
+.poolCard::before,
+.poolCard::after {
+  position: absolute;
+  content: "";
+  pointer-events: none;
+}
+
+.poolCard::before {
+  inset: 0;
+  opacity: 0;
+}
+
+.poolCard::after {
+  opacity: 0;
+}
+
+.poolCard > * {
+  position: relative;
+  z-index: 1;
+}
+
 .poolDex {
   position: absolute;
   top: 12px;
@@ -1497,21 +1543,59 @@ button {
   }
 }
 
-@keyframes shinySwap {
+@keyframes shinySlotFlash {
   0% {
     opacity: 0;
-    filter: brightness(2.5) saturate(0.35) drop-shadow(0 0 30px rgba(255, 242, 126, 0.9));
-    transform: scale(0.86) rotate(-2deg);
+    transform: scale(0.82);
   }
-  42% {
+  18% {
     opacity: 1;
-    filter: brightness(1.7) saturate(1.35) drop-shadow(0 0 34px rgba(255, 230, 95, 0.78));
-    transform: scale(1.08) rotate(2deg);
+    transform: scale(1.02);
+  }
+  48% {
+    opacity: 0.72;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+}
+
+@keyframes shinyStarPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.25) rotate(0deg);
+  }
+  24% {
+    opacity: 1;
+    transform: scale(1.14) rotate(18deg);
+  }
+  68% {
+    opacity: 0.92;
+    transform: scale(0.88) rotate(38deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-12px, 18px) scale(0.48) rotate(58deg);
+  }
+}
+
+@keyframes shinySpriteReveal {
+  0% {
+    opacity: 0.22;
+    filter: brightness(1.9) saturate(0.78) drop-shadow(0 0 28px rgba(255, 238, 124, 0.72));
+    transform: scale(0.97);
+  }
+  46% {
+    opacity: 1;
+    filter: brightness(1.28) saturate(1.18) drop-shadow(0 0 24px rgba(255, 229, 94, 0.42));
+    transform: scale(1.025);
   }
   100% {
     opacity: 1;
     filter: drop-shadow(0 20px 22px rgba(0, 0, 0, 0.36));
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
   }
 }
 
