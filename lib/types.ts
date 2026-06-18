@@ -15,6 +15,7 @@ export type GameEntry = {
   id: string;
   name: string;
   shortName: string;
+  coverImage?: string;
 };
 
 export type TeamFilters = {

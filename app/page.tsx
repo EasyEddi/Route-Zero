@@ -437,8 +437,18 @@ export default function Home() {
                   style={{ ["--cover-hue" as string]: `${(index * 37) % 360}deg` }}
                 >
                   <span className="gameCover" aria-hidden="true">
-                    <span>PKMN</span>
-                    <strong>{game.shortName}</strong>
+                    {game.coverImage ? (
+                      <img
+                        src={game.coverImage}
+                        alt=""
+                        loading="lazy"
+                        onError={(event) => event.currentTarget.remove()}
+                      />
+                    ) : null}
+                    <span className="gameCoverFallback">
+                      <span>PKMN</span>
+                      <strong>{game.shortName}</strong>
+                    </span>
                   </span>
                   <span className="gameName">{game.name}</span>
                 </button>
