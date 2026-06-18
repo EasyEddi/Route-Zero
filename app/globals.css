@@ -619,7 +619,7 @@ button {
 .settingsFooter {
   display: grid;
   gap: 12px;
-  margin: 16px 8px 0;
+  margin: 16px 0 0;
   color: var(--muted);
   font-size: 0.95rem;
 }
@@ -638,6 +638,7 @@ button {
 .settingsActionButton {
   display: flex;
   width: 100%;
+  min-width: 0;
   align-items: center;
   justify-content: center;
   gap: 9px;
