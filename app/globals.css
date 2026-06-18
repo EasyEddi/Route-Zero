@@ -617,30 +617,55 @@ button {
 }
 
 .settingsFooter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
+  display: grid;
+  gap: 12px;
   margin: 16px 8px 0;
   color: var(--muted);
   font-size: 0.95rem;
 }
 
-.settingsFooter button {
-  display: inline-flex;
+.settingsFooter > span {
+  line-height: 1.35;
+}
+
+.settingsFooterActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.settingsActionButton {
+  display: flex;
   align-items: center;
-  gap: 7px;
-  border: 0;
-  color: #b18cff;
-  background: transparent;
+  justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #d9e3f8;
+  background: rgba(5, 15, 29, 0.72);
   font-weight: 800;
   cursor: pointer;
 }
 
-.appRoot[data-theme="light"] .settingsFooter button {
-  color: #6845d8;
+.settingsActionButton:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(10, 23, 42, 0.86);
 }
 
-.settingsFooter button:disabled {
+.appRoot[data-theme="light"] .settingsActionButton {
+  border-color: rgba(28, 42, 64, 0.12);
+  color: #243149;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.appRoot[data-theme="light"] .settingsActionButton:hover {
+  border-color: rgba(118, 84, 234, 0.24);
+  background: rgba(248, 251, 255, 0.94);
+}
+
+.settingsActionButton:disabled {
   cursor: not-allowed;
   opacity: 0.42;
 }

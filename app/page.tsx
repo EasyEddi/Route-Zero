@@ -441,13 +441,16 @@ export default function Home() {
                   ? `${availableCount} Pokemon in the pool for ${selectedGame.shortName}`
                   : "Select a game to see the Pokemon pool"}
               </span>
-              <button type="button" onClick={() => setIsPoolOpen(true)} disabled={!filters.gameId}>
-                <Eye size={17} />
-                View pool
-              </button>
-              <button type="button" onClick={resetFilters}>
-                Reset settings
-              </button>
+              <div className="settingsFooterActions">
+                <button className="settingsActionButton" type="button" onClick={() => setIsPoolOpen(true)} disabled={!filters.gameId}>
+                  <Eye size={18} />
+                  View pool
+                </button>
+                <button className="settingsActionButton" type="button" onClick={resetFilters}>
+                  <RotateCcw size={18} />
+                  Reset settings
+                </button>
+              </div>
             </div>
           </div>
         </section>
