@@ -66,7 +66,7 @@ button {
 .themeToggle {
   position: fixed;
   z-index: 40;
-  top: 10px;
+  top: 22px;
   left: 10px;
   display: grid;
   width: 42px;
