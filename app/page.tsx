@@ -14,6 +14,8 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  Moon,
+  Sun,
   Users,
 } from "lucide-react";
 import { games } from "@/data/games";
@@ -66,6 +68,7 @@ export default function Home() {
   const [poolSearch, setPoolSearch] = useState("");
   const [gameSearch, setGameSearch] = useState("");
   const [rollingSlots, setRollingSlots] = useState<PokemonEntry[]>([]);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   const selectedGame = games.find((game) => game.id === filters.gameId);
   const team = useMemo(
@@ -181,7 +184,18 @@ export default function Home() {
   }
 
   return (
-    <main className="shell">
+    <main className="appRoot" data-theme={theme}>
+      <button
+        className="themeToggle"
+        type="button"
+        onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        title={theme === "dark" ? "Light mode" : "Dark mode"}
+      >
+        {theme === "dark" ? <Sun size={19} /> : <Moon size={19} />}
+      </button>
+
+      <section className="shell">
       <header className="topbar">
         <div className="brand">
           <span className="brandMark" aria-hidden="true" />
@@ -518,6 +532,7 @@ export default function Home() {
           </section>
         </div>
       ) : null}
+      </section>
     </main>
   );
 }

@@ -30,6 +30,30 @@ body {
     linear-gradient(180deg, #081323 0%, #050b14 100%);
 }
 
+.appRoot {
+  min-height: 100vh;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(63, 86, 170, 0.32), transparent 38rem),
+    linear-gradient(180deg, #081323 0%, #050b14 100%);
+}
+
+.appRoot[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef3fb;
+  --panel: rgba(255, 255, 255, 0.88);
+  --panel-strong: rgba(255, 255, 255, 0.96);
+  --line: rgba(28, 42, 64, 0.16);
+  --muted: #607085;
+  --text: #131b2a;
+  --purple: #7654ea;
+  --purple-strong: #8a63ff;
+  --shadow: 0 26px 70px rgba(30, 45, 73, 0.18);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(126, 150, 231, 0.28), transparent 38rem),
+    linear-gradient(180deg, #f6f9ff 0%, #e9eff8 100%);
+}
+
 button,
 input {
   font: inherit;
@@ -37,6 +61,41 @@ input {
 
 button {
   color: inherit;
+}
+
+.themeToggle {
+  position: fixed;
+  z-index: 40;
+  top: 10px;
+  left: 10px;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: #f8fbff;
+  background: rgba(7, 15, 27, 0.82);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.themeToggle:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(18, 31, 52, 0.92);
+}
+
+.appRoot[data-theme="light"] .themeToggle {
+  border-color: rgba(28, 42, 64, 0.18);
+  color: #172033;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 12px 30px rgba(30, 45, 73, 0.16);
+}
+
+.appRoot[data-theme="light"] .themeToggle:hover {
+  border-color: rgba(118, 84, 234, 0.35);
+  background: rgba(255, 255, 255, 0.98);
 }
 
 .shell {
@@ -52,6 +111,13 @@ button {
   box-shadow: var(--shadow);
 }
 
+.appRoot[data-theme="light"] .shell {
+  border-color: rgba(28, 42, 64, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 250, 255, 0.98)),
+    radial-gradient(circle at 30% 15%, rgba(126, 150, 231, 0.22), transparent 34rem);
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -60,6 +126,11 @@ button {
   padding: 0 22px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   background: rgba(3, 10, 20, 0.78);
+}
+
+.appRoot[data-theme="light"] .topbar {
+  border-bottom-color: rgba(28, 42, 64, 0.1);
+  background: rgba(255, 255, 255, 0.74);
 }
 
 .brand {
@@ -77,6 +148,11 @@ button {
   display: inline-block;
   border: 5px solid #f8fbff;
   border-radius: 999px;
+}
+
+.appRoot[data-theme="light"] .brandMark,
+.appRoot[data-theme="light"] .miniBall {
+  border-color: #172033;
 }
 
 .brandMark {
@@ -97,6 +173,11 @@ button {
   transform: translateY(-50%);
 }
 
+.appRoot[data-theme="light"] .brandMark::before,
+.appRoot[data-theme="light"] .miniBall::before {
+  background: #172033;
+}
+
 .brandMark::after,
 .pokeballGlow::after,
 .miniBall::after {
@@ -107,6 +188,11 @@ button {
   border-radius: 999px;
   background: #0b1424;
   transform: translate(-50%, -50%);
+}
+
+.appRoot[data-theme="light"] .brandMark::after,
+.appRoot[data-theme="light"] .miniBall::after {
+  background: #f7f9ff;
 }
 
 .brandMark::after {
@@ -125,6 +211,11 @@ button {
   border-radius: 8px;
   background: rgba(18, 31, 52, 0.78);
   cursor: pointer;
+}
+
+.appRoot[data-theme="light"] .iconButton,
+.appRoot[data-theme="light"] .modalCloseButton {
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .heroGrid {
@@ -153,6 +244,12 @@ button {
     radial-gradient(circle at 52% 10%, rgba(89, 91, 180, 0.38), transparent 15rem);
 }
 
+.appRoot[data-theme="light"] .intro {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(239, 245, 255, 0.94)),
+    radial-gradient(circle at 52% 10%, rgba(126, 150, 231, 0.28), transparent 15rem);
+}
+
 .intro::after {
   position: absolute;
   z-index: 0;
@@ -163,6 +260,12 @@ button {
     linear-gradient(145deg, transparent 48%, rgba(30, 48, 76, 0.62) 49%),
     linear-gradient(35deg, transparent 58%, rgba(17, 33, 54, 0.92) 59%);
   opacity: 0.7;
+}
+
+.appRoot[data-theme="light"] .intro::after {
+  background:
+    linear-gradient(145deg, transparent 48%, rgba(198, 211, 235, 0.62) 49%),
+    linear-gradient(35deg, transparent 58%, rgba(218, 228, 244, 0.9) 59%);
 }
 
 .intro > * {
@@ -187,12 +290,21 @@ button {
   background: #081323;
 }
 
+.appRoot[data-theme="light"] .pokeballGlow::before {
+  background: #172033;
+}
+
 .pokeballGlow::after {
   z-index: 2;
   width: 34px;
   height: 34px;
   border-color: #101b31;
   background: #4f61b4;
+}
+
+.appRoot[data-theme="light"] .pokeballGlow::after {
+  border-color: #172033;
+  background: #f7f9ff;
 }
 
 .intro h1,
@@ -209,6 +321,11 @@ button {
   color: #d5dbea;
   font-size: 1.18rem;
   line-height: 1.5;
+}
+
+.appRoot[data-theme="light"] .intro p,
+.appRoot[data-theme="light"] .teamHeader span {
+  color: #516176;
 }
 
 .primaryButton,
@@ -250,6 +367,10 @@ button {
   background: rgba(18, 30, 49, 0.9);
 }
 
+.appRoot[data-theme="light"] .secondaryButton {
+  background: rgba(255, 255, 255, 0.88);
+}
+
 .spinIcon {
   animation: spinDice 720ms cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
@@ -260,6 +381,10 @@ button {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(18, 29, 48, 0.92), rgba(12, 21, 35, 0.95));
+}
+
+.appRoot[data-theme="light"] .settingsPanel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 255, 0.95));
 }
 
 .panelHeader,
@@ -295,6 +420,13 @@ button {
   background: rgba(5, 15, 29, 0.72);
 }
 
+.appRoot[data-theme="light"] .settingRow,
+.appRoot[data-theme="light"] .toggleRow,
+.appRoot[data-theme="light"] .typeBlock {
+  border-color: rgba(28, 42, 64, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+}
+
 .settingButton {
   width: 100%;
   color: inherit;
@@ -307,6 +439,11 @@ button {
   background: rgba(10, 23, 42, 0.86);
 }
 
+.appRoot[data-theme="light"] .settingButton:hover {
+  border-color: rgba(118, 84, 234, 0.24);
+  background: rgba(248, 251, 255, 0.94);
+}
+
 .settingValue {
   max-width: 220px;
   overflow: hidden;
@@ -317,6 +454,10 @@ button {
   white-space: nowrap;
 }
 
+.appRoot[data-theme="light"] .settingValue {
+  color: #243149;
+}
+
 .strongValue {
   display: inline-grid;
   min-width: 38px;
@@ -325,6 +466,11 @@ button {
   border-radius: 8px;
   background: rgba(26, 39, 62, 0.94);
   font-size: 1.15rem;
+}
+
+.appRoot[data-theme="light"] .strongValue,
+.appRoot[data-theme="light"] .stepper button {
+  background: rgba(236, 242, 252, 0.94);
 }
 
 .settingRow.compact strong {
@@ -386,6 +532,10 @@ button {
   border-radius: 999px;
   background: #3a4456;
   cursor: pointer;
+}
+
+.appRoot[data-theme="light"] .toggleRow input {
+  background: #c7d1df;
 }
 
 .toggleRow input::after {
@@ -474,6 +624,10 @@ button {
   cursor: pointer;
 }
 
+.appRoot[data-theme="light"] .settingsFooter button {
+  color: #6845d8;
+}
+
 .settingsFooter button:disabled {
   cursor: not-allowed;
   opacity: 0.42;
@@ -494,6 +648,11 @@ button {
   text-transform: uppercase;
 }
 
+.appRoot[data-theme="light"] .teamHeader p,
+.appRoot[data-theme="light"] .poolModalHeader p {
+  color: #576b8a;
+}
+
 .message {
   display: grid;
   place-items: center;
@@ -504,6 +663,10 @@ button {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: rgba(9, 18, 32, 0.72);
+}
+
+.appRoot[data-theme="light"] .message {
+  background: rgba(255, 255, 255, 0.68);
 }
 
 .message strong {
@@ -557,6 +720,12 @@ button {
     linear-gradient(180deg, rgba(18, 31, 51, 0.86), rgba(10, 18, 31, 0.9));
 }
 
+.appRoot[data-theme="light"] .pokemonCard {
+  background:
+    radial-gradient(circle at 50% 32%, rgba(126, 150, 231, 0.2), transparent 11rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(239, 245, 255, 0.9));
+}
+
 .pokemonCard::before,
 .pokemonCard::after {
   position: absolute;
@@ -594,6 +763,12 @@ button {
   animation-delay: var(--delay, 0ms);
 }
 
+.appRoot[data-theme="light"] .rollingCard {
+  background:
+    radial-gradient(circle at 50% 32%, rgba(143, 87, 255, 0.2), transparent 11rem),
+    linear-gradient(180deg, rgba(248, 251, 255, 0.92), rgba(232, 239, 251, 0.96));
+}
+
 .rollingCard::before {
   position: absolute;
   inset: -35% 0;
@@ -627,6 +802,12 @@ button {
     linear-gradient(180deg, rgba(18, 31, 51, 0.86), rgba(10, 18, 31, 0.9));
 }
 
+.appRoot[data-theme="light"] .revealSequenceCard {
+  background:
+    radial-gradient(circle at 50% 32%, rgba(126, 150, 231, 0.2), transparent 11rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(239, 245, 255, 0.9));
+}
+
 .revealedCard::before {
   background:
     radial-gradient(circle at 22% 22%, rgba(255, 255, 255, 0.95) 0 2px, transparent 3px),
@@ -649,6 +830,11 @@ button {
   font-size: 1.35rem;
   font-weight: 900;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+}
+
+.appRoot[data-theme="light"] .dexNumber {
+  color: #243149;
+  text-shadow: none;
 }
 
 .pokemonSprite {
@@ -683,6 +869,10 @@ button {
   text-transform: uppercase;
 }
 
+.appRoot[data-theme="light"] .rollingCard h3 {
+  color: #5c6d84;
+}
+
 .slotBars {
   display: flex;
   gap: 8px;
@@ -696,6 +886,10 @@ button {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
   animation: slotBar 420ms ease-in-out infinite;
+}
+
+.appRoot[data-theme="light"] .slotBars span {
+  background: rgba(28, 42, 64, 0.14);
 }
 
 .slotBars span:nth-child(2) {
@@ -750,6 +944,10 @@ button {
   backdrop-filter: blur(14px);
 }
 
+.appRoot[data-theme="light"] .modalOverlay {
+  background: rgba(226, 234, 247, 0.72);
+}
+
 .poolModal {
   width: min(980px, 100%);
   max-height: min(86vh, 860px);
@@ -764,6 +962,13 @@ button {
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.58);
 }
 
+.appRoot[data-theme="light"] .poolModal {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(126, 150, 231, 0.16), transparent 24rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 247, 255, 0.98));
+  box-shadow: 0 28px 90px rgba(30, 45, 73, 0.2);
+}
+
 .poolModalHeader {
   display: flex;
   align-items: flex-start;
@@ -771,6 +976,10 @@ button {
   gap: 18px;
   padding: 22px 24px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.appRoot[data-theme="light"] .poolModalHeader {
+  border-bottom-color: rgba(28, 42, 64, 0.1);
 }
 
 .poolModalHeader p,
@@ -820,6 +1029,11 @@ button {
   background: rgba(5, 15, 29, 0.72);
 }
 
+.appRoot[data-theme="light"] .poolSearch {
+  border-color: rgba(28, 42, 64, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+}
+
 .poolSearch input {
   width: 100%;
   min-width: 0;
@@ -832,6 +1046,10 @@ button {
 
 .poolSearch input::placeholder {
   color: #7f8ba1;
+}
+
+.appRoot[data-theme="light"] .poolSearch input::placeholder {
+  color: #7a879b;
 }
 
 .poolGrid {
@@ -868,6 +1086,14 @@ button {
   cursor: pointer;
 }
 
+.appRoot[data-theme="light"] .gameCard,
+.appRoot[data-theme="light"] .sizeCard,
+.appRoot[data-theme="light"] .poolCard {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(126, 150, 231, 0.18), transparent 8rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(239, 245, 255, 0.92));
+}
+
 .gameCard:hover,
 .gameCard[data-active="true"] {
   border-color: rgba(177, 140, 255, 0.62);
@@ -883,6 +1109,10 @@ button {
   overflow: hidden;
   border-radius: 8px;
   background: rgba(3, 10, 20, 0.42);
+}
+
+.appRoot[data-theme="light"] .gameCover {
+  background: rgba(229, 236, 248, 0.72);
 }
 
 .gameCover img {
@@ -940,6 +1170,12 @@ button {
   text-align: center;
 }
 
+.appRoot[data-theme="light"] .gameName,
+.appRoot[data-theme="light"] .poolDex {
+  color: #172033;
+  text-shadow: none;
+}
+
 .sizeModal {
   width: min(560px, 100%);
 }
@@ -972,6 +1208,13 @@ button {
   background:
     radial-gradient(circle at 50% 35%, rgba(143, 87, 255, 0.34), transparent 6rem),
     linear-gradient(180deg, rgba(32, 45, 72, 0.92), rgba(15, 24, 42, 0.94));
+}
+
+.appRoot[data-theme="light"] .sizeCard:hover,
+.appRoot[data-theme="light"] .sizeCard[data-active="true"] {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(143, 87, 255, 0.22), transparent 6rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(232, 239, 251, 0.98));
 }
 
 .poolCard {
