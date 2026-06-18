@@ -167,9 +167,8 @@ export default function Home() {
         window.setTimeout(() => setRevealedCount(index + 1), index * 180);
       });
       window.setTimeout(() => {
-        setRollingSlots([]);
         setIsRevealing(false);
-      }, result.team.length * 180 + 820);
+      }, result.team.length * 180 + 760);
     }, 1700);
   }
 
@@ -312,11 +311,11 @@ export default function Home() {
 
           {error ? <div className="message error">{error}</div> : null}
 
-          {isRolling || isRevealing ? (
+          {isRolling || rollingSlots.length > 0 ? (
             <div className="teamGrid rollingGrid" aria-label="Rolling Pokemon silhouettes">
               {rollingSlots.map((entry, index) => {
                 const revealedEntry = team[index];
-                const isSlotRevealed = isRevealing && revealedEntry && index < revealedCount;
+                const isSlotRevealed = revealedEntry !== undefined && index < revealedCount;
 
                 return (
                   <article
@@ -361,7 +360,7 @@ export default function Home() {
             </div>
           ) : null}
 
-          {team.length > 0 && !isRolling && !isRevealing ? (
+          {team.length > 0 && !isRolling && !isRevealing && rollingSlots.length === 0 ? (
             <div className="teamGrid" style={{ ["--card-count" as string]: team.length }}>
               {team.map((entry, index) =>
                 entry ? (

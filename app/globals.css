@@ -794,6 +794,7 @@ button {
 
 .rollingCard.revealedCard::after {
   animation: none;
+  opacity: 0;
 }
 
 .revealSequenceCard {
