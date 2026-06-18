@@ -491,11 +491,11 @@ export default function Home() {
                       />
                     ) : null}
                     <img
-                      src={isSlotRevealed ? getPokemonSprite(revealedEntry, isShiny) : entry.sprite}
+                      src={isSlotRevealed ? getPokemonSprite(revealedEntry, isShiny) : getRollingSprite(entry)}
                       alt=""
                       className={`pokemonSprite ${isSlotRevealed ? "" : "silhouetteSprite"} ${isShiny ? "shinySprite" : ""}`}
                       data-shiny={isSlotRevealed ? isShiny : undefined}
-                      key={isSlotRevealed ? `${revealedEntry.id}-${isShiny ? "shiny" : "normal"}` : "rolling-silhouette"}
+                      key={isSlotRevealed ? `${revealedEntry.id}-${isShiny ? "shiny" : "normal"}` : `rolling-${entry.id}`}
                       onError={(event) => {
                         if (isShiny && isSlotRevealed) {
                           event.currentTarget.src = revealedEntry.sprite;
@@ -779,6 +779,10 @@ function getPokemonSprite(entry: PokemonEntry, shiny: boolean) {
   }
 
   return entry.sprite.replace("/official-artwork/", "/official-artwork/shiny/");
+}
+
+function getRollingSprite(entry: PokemonEntry) {
+  return entry.sprite.replace("/other/official-artwork/", "/");
 }
 
 const spritePreloadCache = new Map<string, Promise<void>>();
