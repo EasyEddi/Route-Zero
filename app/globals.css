@@ -985,7 +985,7 @@ button {
   justify-content: center;
   align-items: center;
   min-height: 58px;
-  margin: 16px 0 0;
+  margin: 16px 0 14px;
 }
 
 .teamTools[data-visible="false"] {
