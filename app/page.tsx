@@ -885,8 +885,8 @@ export default function Home() {
 
           {error ? <div className="message error">{error}</div> : null}
 
-          {displayedTeam.length > 0 ? (
-            <div className="teamTools">
+          <div className="teamTools" data-visible={displayedTeam.length > 0}>
+            {displayedTeam.length > 0 ? (
               <button
                 className="teamShinyButton"
                 type="button"
@@ -900,8 +900,8 @@ export default function Home() {
               >
                 <Sparkles size={22} />
               </button>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
 
           {isRolling || (rollingSlots.length > 0 && team.length > 0) ? (
             <div className="teamGrid rollingGrid" aria-label="Rolling Pokemon silhouettes">

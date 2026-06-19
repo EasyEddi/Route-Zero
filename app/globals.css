@@ -983,7 +983,13 @@ button {
 .teamTools {
   display: flex;
   justify-content: center;
+  align-items: center;
+  min-height: 58px;
   margin: 16px 0 0;
+}
+
+.teamTools[data-visible="false"] {
+  visibility: hidden;
 }
 
 .teamShinyButton {
@@ -1108,7 +1114,7 @@ button {
 }
 
 .rollingGrid {
-  margin-top: 18px;
+  margin-top: 0;
 }
 
 .pokemonCard {
