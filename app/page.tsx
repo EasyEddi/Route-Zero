@@ -1955,10 +1955,10 @@ function mergeEncounterRows(rows: EncounterRow[]) {
 
 function getEggEncounterRow() {
   return createFallbackRow({
-    location: "Breeding",
+    location: "Egg",
     levels: "varies",
-    methods: "Breed a compatible Pokemon from this evolution line. This is deterministic breeding, not a random encounter roll.",
-    source: "Breed",
+    methods: "Obtain by hatching an egg from this Pokemon's evolution line.",
+    source: "Egg",
   });
 }
 
