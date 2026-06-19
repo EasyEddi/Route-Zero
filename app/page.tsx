@@ -87,6 +87,9 @@ export default function Home() {
   const [detailError, setDetailError] = useState<string | null>(null);
   const [poolSearch, setPoolSearch] = useState("");
   const [gameSearch, setGameSearch] = useState("");
+  const [lockedPokemonIds, setLockedPokemonIds] = useState<number[]>([]);
+  const [lockedSearch, setLockedSearch] = useState("");
+  const [lockedMessage, setLockedMessage] = useState<string | null>(null);
   const [rollingSlots, setRollingSlots] = useState<PokemonEntry[]>([]);
   const [shinyCards, setShinyCards] = useState<Record<string, boolean>>({});
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -99,11 +102,30 @@ export default function Home() {
     () => teamIds.map((id) => pokemon.find((entry) => entry.id === id)).filter(Boolean),
     [teamIds],
   );
+  const lockedPokemon = useMemo(
+    () => lockedPokemonIds.map((id) => pokemon.find((entry) => entry.id === id)).filter(Boolean),
+    [lockedPokemonIds],
+  );
+  const displayedTeam = team.length > 0 ? team : lockedPokemon;
 
   const availableCount = useMemo(() => {
     return rollTeam(filters, pokemon, { dryRun: true }).availableCount;
   }, [filters]);
   const currentPool = useMemo(() => applyFilters(filters, pokemon), [filters]);
+  const lockedSuggestions = useMemo(() => {
+    const query = lockedSearch.trim().toLowerCase();
+
+    if (!query || !filters.gameId) {
+      return [];
+    }
+
+    return currentPool
+      .filter((entry) => {
+        const dexNumber = String(entry.id).padStart(3, "0");
+        return entry.name.toLowerCase().startsWith(query) || dexNumber.startsWith(query);
+      })
+      .slice(0, 7);
+  }, [currentPool, filters.gameId, lockedSearch]);
   const searchedPool = useMemo(() => {
     const query = poolSearch.trim().toLowerCase();
 
@@ -331,7 +353,7 @@ export default function Home() {
   }
 
   function warmTeamShinySprites() {
-    team.forEach((entry) => {
+    displayedTeam.forEach((entry) => {
       if (entry) {
         warmShinySprite(entry);
       }
@@ -339,7 +361,7 @@ export default function Home() {
   }
 
   function toggleTeamShinyCards() {
-    const entries = team.filter((entry): entry is PokemonEntry => entry !== undefined);
+    const entries = displayedTeam.filter((entry): entry is PokemonEntry => entry !== undefined);
     const allShiny = entries.length > 0 && entries.every((_, index) => shinyCards[`team-${index}`]);
 
     if (allShiny) {
@@ -436,6 +458,79 @@ export default function Home() {
     }));
   }
 
+  function validateLockedPokemonCandidate(entry: PokemonEntry) {
+    if (lockedPokemonIds.length >= filters.teamSize) {
+      return `Your locked picks already fill all ${filters.teamSize} team slots.`;
+    }
+
+    if (!filters.allowDuplicatePokemon && lockedPokemonIds.includes(entry.id)) {
+      return `${entry.name} is already locked.`;
+    }
+
+    if (
+      !filters.allowDuplicateTypes &&
+      lockedPokemon.some((lockedEntry) => lockedEntry?.types.some((type) => entry.types.includes(type)))
+    ) {
+      return `${entry.name} shares a type with another locked Pokemon. Enable duplicate Pokemon types first.`;
+    }
+
+    return null;
+  }
+
+  function addLockedPokemon(entry: PokemonEntry) {
+    const validationMessage = validateLockedPokemonCandidate(entry);
+
+    if (validationMessage) {
+      setLockedMessage(validationMessage);
+      return;
+    }
+
+    setLockedPokemonIds((current) => [...current, entry.id]);
+    setLockedSearch("");
+    setLockedMessage(null);
+    clearRolledTeam();
+  }
+
+  function removeLockedPokemon(index: number) {
+    setLockedPokemonIds((current) => current.filter((_, currentIndex) => currentIndex !== index));
+    setLockedMessage(null);
+    clearRolledTeam();
+  }
+
+  function submitLockedPokemon() {
+    const query = lockedSearch.trim().toLowerCase();
+
+    if (!filters.gameId) {
+      setLockedMessage("Select a game before locking Pokemon.");
+      return;
+    }
+
+    if (!query) {
+      return;
+    }
+
+    const exactMatch = currentPool.find((entry) => {
+      const dexNumber = String(entry.id).padStart(3, "0");
+      return entry.name.toLowerCase() === query || dexNumber === query;
+    });
+
+    if (exactMatch) {
+      addLockedPokemon(exactMatch);
+      return;
+    }
+
+    const globalMatch = pokemon.find((entry) => {
+      const dexNumber = String(entry.id).padStart(3, "0");
+      return entry.name.toLowerCase() === query || dexNumber === query;
+    });
+
+    setLockedMessage(
+      globalMatch
+        ? `${globalMatch.name} is not available with the selected game and filters.`
+        : "No Pokemon matches that name or dex number.",
+    );
+  }
+
   function toggleBannedType(type: string) {
     setFilters((current) => {
       const hasType = current.bannedTypes.includes(type);
@@ -450,6 +545,9 @@ export default function Home() {
 
   function selectGame(gameId: string) {
     updateFilter("gameId", gameId);
+    setLockedPokemonIds([]);
+    setLockedSearch("");
+    setLockedMessage(null);
     clearRolledTeam();
     setError(null);
     setGameSearch("");
@@ -458,6 +556,8 @@ export default function Home() {
 
   function selectTeamSize(teamSize: number) {
     updateFilter("teamSize", teamSize);
+    setLockedPokemonIds((current) => current.slice(0, teamSize));
+    setLockedMessage(null);
     clearRolledTeam();
     setError(null);
     setIsTeamSizeOpen(false);
@@ -467,8 +567,10 @@ export default function Home() {
     clearRollTimers();
     const rollRun = rollRunRef.current;
 
-    const result = rollTeam(filters, pokemon);
+    const result = rollTeam(filters, pokemon, { lockedPokemonIds });
     const pool = applyFilters(filters, pokemon);
+    const lockedEntries = lockedPokemon.filter((entry): entry is PokemonEntry => Boolean(entry));
+    const lockedSlotCount = lockedEntries.length;
 
     if (!result.ok) {
       setError(result.message);
@@ -482,32 +584,37 @@ export default function Home() {
 
     setIsRolling(true);
     setIsRevealing(false);
-    setRevealedCount(0);
+    setRevealedCount(lockedSlotCount);
     setError(null);
     setTeamIds([]);
     setRollingSlots([]);
 
-    const animationPool = getAnimationPool(pool);
+    const animationPool = getAnimationPool(
+      filters.allowDuplicatePokemon ? pool : pool.filter((entry) => !lockedPokemonIds.includes(entry.id)),
+    );
 
-    void preloadPokemonSprites(animationPool).then(() => {
+    void preloadPokemonSprites([...animationPool, ...lockedEntries]).then(() => {
       if (rollRun !== rollRunRef.current) {
         return;
       }
 
-      setRollingSlots(getRandomSlots(animationPool, filters.teamSize));
+      setRollingSlots(getRandomSlots(animationPool, filters.teamSize, lockedEntries));
 
       rollIntervalRef.current = window.setInterval(() => {
-        setRollingSlots(getRandomSlots(animationPool, filters.teamSize));
+        setRollingSlots(getRandomSlots(animationPool, filters.teamSize, lockedEntries));
       }, 95);
 
       const rollTimeout = window.setTimeout(() => {
         setIsRolling(false);
         setIsRevealing(true);
         setTeamIds(result.team.map((entry) => entry.id));
-        result.team.forEach((_, index) => {
-          const revealTimeout = window.setTimeout(() => setRevealedCount(index + 1), index * 180);
+
+        result.team.slice(lockedSlotCount).forEach((_, offset) => {
+          const index = lockedSlotCount + offset;
+          const revealTimeout = window.setTimeout(() => setRevealedCount(index + 1), offset * 180);
           rollTimeoutsRef.current.push(revealTimeout);
         });
+
         const completeTimeout = window.setTimeout(() => {
           if (rollIntervalRef.current !== null) {
             window.clearInterval(rollIntervalRef.current);
@@ -515,7 +622,7 @@ export default function Home() {
           }
 
           setIsRevealing(false);
-        }, result.team.length * 180 + 760);
+        }, Math.max(1, result.team.length - lockedSlotCount) * 180 + 760);
         rollTimeoutsRef.current.push(completeTimeout);
       }, 1700);
       rollTimeoutsRef.current.push(rollTimeout);
@@ -524,6 +631,9 @@ export default function Home() {
 
   function resetFilters() {
     setFilters(defaultFilters);
+    setLockedPokemonIds([]);
+    setLockedSearch("");
+    setLockedMessage(null);
     setError(null);
     clearRolledTeam();
   }
@@ -686,18 +796,81 @@ export default function Home() {
             <span>Good luck on your adventure!</span>
           </div>
 
+          <div className="lockedBuilder">
+            <div className="lockedBuilderHeader">
+              <span>Locked team slots</span>
+              <strong>
+                {lockedPokemonIds.length}/{filters.teamSize}
+              </strong>
+            </div>
+            <div className="lockedSearchWrap">
+              <label className="lockedSearch">
+                <Search size={18} />
+                <input
+                  type="text"
+                  value={lockedSearch}
+                  onChange={(event) => {
+                    setLockedSearch(event.target.value);
+                    setLockedMessage(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      submitLockedPokemon();
+                    }
+
+                    if (event.key === "Tab" && lockedSuggestions[0]) {
+                      event.preventDefault();
+                      addLockedPokemon(lockedSuggestions[0]);
+                    }
+                  }}
+                  placeholder={filters.gameId ? "Lock a Pokemon" : "Select a game first"}
+                  disabled={!filters.gameId || isRolling}
+                  autoComplete="off"
+                />
+              </label>
+              {lockedSuggestions.length > 0 ? (
+                <div className="lockedSuggestions" role="listbox">
+                  {lockedSuggestions.map((entry) => (
+                    <button type="button" key={entry.id} onClick={() => addLockedPokemon(entry)} role="option">
+                      <img src={entry.sprite} alt="" />
+                      <span>{entry.name}</span>
+                      <small>#{String(entry.id).padStart(3, "0")}</small>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {lockedPokemon.length > 0 ? (
+              <div className="lockedPicks">
+                {lockedPokemon.map((entry, index) =>
+                  entry ? (
+                    <span className="lockedPick" key={`${entry.id}-${index}`}>
+                      <img src={entry.sprite} alt="" />
+                      {entry.name}
+                      <button type="button" onClick={() => removeLockedPokemon(index)} aria-label={`Remove ${entry.name}`}>
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ) : null,
+                )}
+              </div>
+            ) : null}
+            {lockedMessage ? <div className="lockedMessage">{lockedMessage}</div> : null}
+          </div>
+
           {error ? <div className="message error">{error}</div> : null}
 
-          {team.length > 0 ? (
+          {displayedTeam.length > 0 ? (
             <div className="teamTools">
               <button
                 className="teamShinyButton"
                 type="button"
-                data-active={team.every((_, index) => shinyCards[`team-${index}`])}
+                data-active={displayedTeam.every((_, index) => shinyCards[`team-${index}`])}
                 onClick={toggleTeamShinyCards}
                 onFocus={warmTeamShinySprites}
                 onPointerEnter={warmTeamShinySprites}
-                disabled={isRolling || team.length === 0}
+                disabled={isRolling || displayedTeam.length === 0}
                 aria-label="Toggle shiny artwork for the full team"
                 title="Toggle full team shiny"
               >
@@ -710,8 +883,10 @@ export default function Home() {
             <div className="teamGrid rollingGrid" aria-label="Rolling Pokemon silhouettes">
               {rollingSlots.map((entry, index) => {
                 const revealedEntry = team[index];
-                const isSlotRevealed = revealedEntry !== undefined && index < revealedCount;
-                const detailEntry = isSlotRevealed ? revealedEntry : undefined;
+                const lockedPreviewEntry = isRolling ? lockedPokemon[index] : undefined;
+                const displayEntry = lockedPreviewEntry ?? (revealedEntry !== undefined && index < revealedCount ? revealedEntry : undefined);
+                const isSlotRevealed = displayEntry !== undefined;
+                const detailEntry = displayEntry;
                 const cardKey = `team-${index}`;
                 const isShiny = Boolean(shinyCards[cardKey]);
 
@@ -727,32 +902,32 @@ export default function Home() {
                     style={{ ["--delay" as string]: `${index * 120}ms` }}
                   >
                     <span className="dexNumber">
-                      {isSlotRevealed ? String(revealedEntry.id).padStart(3, "0") : "???"}
+                      {displayEntry ? String(displayEntry.id).padStart(3, "0") : "???"}
                     </span>
-                    {isSlotRevealed ? <SpecialBadges entry={revealedEntry} /> : null}
-                    {isSlotRevealed ? (
+                    {displayEntry ? <SpecialBadges entry={displayEntry} /> : null}
+                    {displayEntry ? (
                       <ShinyToggle
                         active={isShiny}
-                        onClick={() => toggleShinyCard(cardKey, revealedEntry)}
-                        onWarmup={() => warmShinySprite(revealedEntry)}
+                        onClick={() => toggleShinyCard(cardKey, displayEntry)}
+                        onWarmup={() => warmShinySprite(displayEntry)}
                       />
                     ) : null}
                     <img
-                      src={isSlotRevealed ? getPokemonSprite(revealedEntry, isShiny) : entry.sprite}
+                      src={displayEntry ? getPokemonSprite(displayEntry, isShiny) : entry.sprite}
                       alt=""
                       className={`pokemonSprite ${isSlotRevealed ? "" : "silhouetteSprite"} ${isShiny ? "shinySprite" : ""}`}
                       data-shiny={isSlotRevealed ? isShiny : undefined}
-                      key={isSlotRevealed ? `${revealedEntry.id}-${isShiny ? "shiny" : "normal"}` : "rolling-silhouette"}
+                      key={displayEntry ? `${displayEntry.id}-${isShiny ? "shiny" : "normal"}` : "rolling-silhouette"}
                       onError={(event) => {
-                        if (isShiny && isSlotRevealed) {
-                          event.currentTarget.src = revealedEntry.sprite;
+                        if (isShiny && displayEntry) {
+                          event.currentTarget.src = displayEntry.sprite;
                         }
                       }}
                     />
-                    <h3>{isSlotRevealed ? revealedEntry.name : "Rolling"}</h3>
-                    {isSlotRevealed ? (
+                    <h3>{displayEntry ? displayEntry.name : "Rolling"}</h3>
+                    {displayEntry ? (
                       <div className="typeList">
-                        {revealedEntry.types.map((type) => (
+                        {displayEntry.types.map((type) => (
                           <span className="typeBadge" data-type={type} key={type}>
                             {typeLabels[type]}
                           </span>
@@ -770,7 +945,7 @@ export default function Home() {
             </div>
           ) : null}
 
-          {team.length === 0 && !error && !isRolling ? (
+          {displayedTeam.length === 0 && !error && !isRolling ? (
             <div className="message empty">
               <div className="miniBall" aria-hidden="true" />
               <strong>No team rolled yet</strong>
@@ -778,9 +953,9 @@ export default function Home() {
             </div>
           ) : null}
 
-          {team.length > 0 && !isRolling && !isRevealing && rollingSlots.length === 0 ? (
-            <div className="teamGrid" style={{ ["--card-count" as string]: team.length }}>
-              {team.map((entry, index) =>
+          {displayedTeam.length > 0 && !isRolling && !isRevealing && rollingSlots.length === 0 ? (
+            <div className="teamGrid" style={{ ["--card-count" as string]: displayedTeam.length }}>
+              {displayedTeam.map((entry, index) =>
                 entry ? (
                   (() => {
                     const cardKey = `team-${index}`;
@@ -1280,8 +1455,14 @@ export default function Home() {
   );
 }
 
-function getRandomSlots(pool: PokemonEntry[], size: number) {
-  return Array.from({ length: size }, () => pool[Math.floor(Math.random() * pool.length)]);
+function getRandomSlots(pool: PokemonEntry[], size: number, lockedEntries: PokemonEntry[] = []) {
+  return Array.from({ length: size }, (_, index) => {
+    if (lockedEntries[index]) {
+      return lockedEntries[index];
+    }
+
+    return pool[Math.floor(Math.random() * pool.length)] ?? lockedEntries[lockedEntries.length - 1];
+  }).filter((entry): entry is PokemonEntry => Boolean(entry));
 }
 
 function getAnimationPool(pool: PokemonEntry[]) {

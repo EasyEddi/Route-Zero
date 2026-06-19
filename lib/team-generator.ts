@@ -3,6 +3,7 @@ import { isParadoxPokemon, isSpecialPokemon } from "./pokemon-tags";
 
 type RollOptions = {
   dryRun?: boolean;
+  lockedPokemonIds?: number[];
 };
 
 type RollResult =
@@ -67,18 +68,54 @@ function hasDuplicateType(entry: PokemonEntry, usedTypes: Set<string>) {
   return entry.types.some((type) => usedTypes.has(type));
 }
 
-function buildTeamWithRules(filters: TeamFilters, pool: PokemonEntry[]) {
+function getLockedEntries(pool: PokemonEntry[], lockedPokemonIds: number[]) {
+  return lockedPokemonIds
+    .map((id) => pool.find((entry) => entry.id === id))
+    .filter((entry): entry is PokemonEntry => Boolean(entry));
+}
+
+function buildTeamWithRules(filters: TeamFilters, pool: PokemonEntry[], lockedEntries: PokemonEntry[] = []) {
+  if (lockedEntries.length > filters.teamSize) {
+    return null;
+  }
+
+  if (!filters.allowDuplicatePokemon) {
+    const uniqueLockedIds = new Set(lockedEntries.map((entry) => entry.id));
+
+    if (uniqueLockedIds.size !== lockedEntries.length) {
+      return null;
+    }
+  }
+
+  if (!filters.allowDuplicateTypes) {
+    const usedTypes = new Set<string>();
+
+    for (const entry of lockedEntries) {
+      if (hasDuplicateType(entry, usedTypes)) {
+        return null;
+      }
+
+      entry.types.forEach((type) => usedTypes.add(type));
+    }
+  }
+
   if (filters.allowDuplicatePokemon && filters.allowDuplicateTypes) {
-    return Array.from({ length: filters.teamSize }, () => pool[Math.floor(Math.random() * pool.length)]);
+    return [
+      ...lockedEntries,
+      ...Array.from({ length: filters.teamSize - lockedEntries.length }, () => pool[Math.floor(Math.random() * pool.length)]),
+    ];
   }
 
   if (filters.allowDuplicateTypes) {
-    return shuffleEntries(pool).slice(0, filters.teamSize);
+    const usedLockedIds = new Set(lockedEntries.map((entry) => entry.id));
+    const candidates = filters.allowDuplicatePokemon ? pool : pool.filter((entry) => !usedLockedIds.has(entry.id));
+    const team = [...lockedEntries, ...shuffleEntries(candidates).slice(0, filters.teamSize - lockedEntries.length)];
+    return team.length === filters.teamSize ? team : null;
   }
 
-  const selected: PokemonEntry[] = [];
-  const usedIds = new Set<number>();
-  const usedTypes = new Set<string>();
+  const selected: PokemonEntry[] = [...lockedEntries];
+  const usedIds = new Set<number>(lockedEntries.map((entry) => entry.id));
+  const usedTypes = new Set<string>(lockedEntries.flatMap((entry) => entry.types));
   let attempts = 0;
   const maxAttempts = 20000;
 
@@ -131,11 +168,29 @@ export function rollTeam(
   options: RollOptions = {},
 ): RollResult {
   const pool = applyFilters(filters, entries);
+  const lockedPokemonIds = options.lockedPokemonIds ?? [];
+  const lockedEntries = getLockedEntries(pool, lockedPokemonIds);
 
   if (options.dryRun) {
     return {
       ok: true,
       team: [],
+      availableCount: pool.length,
+    };
+  }
+
+  if (lockedPokemonIds.length > filters.teamSize) {
+    return {
+      ok: false,
+      message: `You locked ${lockedPokemonIds.length} Pokemon, but the selected team size is ${filters.teamSize}.`,
+      availableCount: pool.length,
+    };
+  }
+
+  if (lockedEntries.length !== lockedPokemonIds.length) {
+    return {
+      ok: false,
+      message: "One or more locked Pokemon are not available with the current game and filters.",
       availableCount: pool.length,
     };
   }
@@ -148,7 +203,7 @@ export function rollTeam(
     };
   }
 
-  const team = buildTeamWithRules(filters, pool);
+  const team = buildTeamWithRules(filters, pool, lockedEntries);
 
   if (!team) {
     return {
