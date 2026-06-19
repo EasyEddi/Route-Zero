@@ -1022,30 +1022,30 @@ export default function Home() {
                     <section className="detailSection compactDetailSection" aria-label="Evolution path">
                       <div className="detailSectionHeader">
                         <span>Evolution path</span>
-                        <small>Line info</small>
                       </div>
                       <div className="evolutionList">
                         {evolvesFrom ? (
                           <div className="evolutionRow">
                             <span>Evolves from</span>
-                            <button type="button" onClick={() => openPokemonDetailById(evolvesFrom.id)}>
-                              {evolvesFrom.name}
-                            </button>
-                          </div>
-                        ) : null}
-                        {evolutionInfo.to.length > 0 ? (
-                          <div className="evolutionRow">
-                            <span>Evolves into</span>
-                            <div className="evolutionTargets">
-                              {evolutionInfo.to.map((target) => (
-                                <button type="button" key={target.id} onClick={() => openPokemonDetailById(target.id)}>
-                                  {target.name}
-                                  {target.method ? <small>{target.method}</small> : null}
-                                </button>
-                              ))}
+                            <div>
+                              <button type="button" onClick={() => openPokemonDetailById(evolvesFrom.id)}>
+                                {evolvesFrom.name}
+                              </button>
+                              {evolvesFrom.method ? <small>({evolvesFrom.method})</small> : null}
                             </div>
                           </div>
                         ) : null}
+                        {evolutionInfo.to.map((target) => (
+                          <div className="evolutionRow" key={target.id}>
+                            <span>Evolves into</span>
+                            <div>
+                              <button type="button" onClick={() => openPokemonDetailById(target.id)}>
+                                {target.name}
+                              </button>
+                              {target.method ? <small>({target.method})</small> : null}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </section>
                   );
@@ -1830,7 +1830,7 @@ function getEvolutionMethodText(detail: PokeApiEvolutionDetail) {
   const parts = [];
 
   if (detail.min_level) {
-    parts.push(`level ${detail.min_level}`);
+    parts.push(`lvl ${detail.min_level}`);
   }
 
   if (detail.item) {
