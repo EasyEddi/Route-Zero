@@ -7,6 +7,7 @@ import {
   Copy,
   Crown,
   Dice5,
+  Dna,
   Eye,
   Gamepad2,
   Info,
@@ -27,7 +28,7 @@ import {
 import { games } from "@/data/games";
 import { pokemon } from "@/data/pokemon";
 import { pokemonTypes } from "@/data/types";
-import { isLegendaryPokemon } from "@/lib/pokemon-tags";
+import { isLegendaryPokemon, isParadoxPokemon } from "@/lib/pokemon-tags";
 import { applyFilters, rollTeam } from "@/lib/team-generator";
 import type { PokemonEntry, TeamFilters } from "@/lib/types";
 
@@ -40,6 +41,7 @@ const defaultFilters: TeamFilters = {
   allowTradePokemon: false,
   allowRoamingPokemon: false,
   allowLegendaryPokemon: false,
+  allowParadoxPokemon: false,
   allowDuplicatePokemon: false,
   allowDuplicateTypes: false,
 };
@@ -490,6 +492,13 @@ export default function Home() {
               onChange={(checked) => updateFilter("allowLegendaryPokemon", checked)}
             />
             <ToggleRow
+              icon={<Dna size={22} />}
+              label="Allow paradox-Pokemon"
+              description="Ancient and future Paradox Pokemon can appear when this is enabled."
+              checked={filters.allowParadoxPokemon}
+              onChange={(checked) => updateFilter("allowParadoxPokemon", checked)}
+            />
+            <ToggleRow
               icon={<Repeat2 size={22} />}
               label="Duplicate Pokemon"
               description="The same Pokemon can appear more than once in the same team."
@@ -598,6 +607,7 @@ export default function Home() {
                     <span className="dexNumber">
                       {isSlotRevealed ? String(revealedEntry.id).padStart(3, "0") : "???"}
                     </span>
+                    {isSlotRevealed ? <SpecialBadges entry={revealedEntry} /> : null}
                     {isSlotRevealed ? (
                       <ShinyToggle
                         active={isShiny}
@@ -666,6 +676,7 @@ export default function Home() {
                     style={{ ["--delay" as string]: `${index * 55}ms` }}
                   >
                     <span className="dexNumber">{String(entry.id).padStart(3, "0")}</span>
+                    <SpecialBadges entry={entry} />
                     <ShinyToggle
                       active={isShiny}
                       onClick={() => toggleShinyCard(cardKey, entry)}
@@ -771,6 +782,7 @@ export default function Home() {
                       onKeyDown={(event) => handleCardKeyDown(event, entry)}
                     >
                       <span className="poolDex">{String(entry.id).padStart(3, "0")}</span>
+                      <SpecialBadges entry={entry} compact />
                       <ShinyToggle
                         active={isShiny}
                         onClick={() => toggleShinyCard(cardKey, entry)}
@@ -1058,6 +1070,35 @@ function ShinyToggle({ active, onClick, onWarmup }: ShinyToggleProps) {
     >
       <Sparkles size={17} />
     </button>
+  );
+}
+
+type SpecialBadgesProps = {
+  entry: PokemonEntry;
+  compact?: boolean;
+};
+
+function SpecialBadges({ entry, compact = false }: SpecialBadgesProps) {
+  const badges = [];
+
+  if (isLegendaryPokemon(entry.id)) {
+    badges.push("Legendary");
+  }
+
+  if (isParadoxPokemon(entry.id)) {
+    badges.push("Paradox");
+  }
+
+  if (badges.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="specialBadges" data-compact={compact}>
+      {badges.map((badge) => (
+        <span data-badge={badge.toLowerCase()} key={badge}>{badge}</span>
+      ))}
+    </div>
   );
 }
 
@@ -1438,7 +1479,7 @@ function getAvailabilityNotes(entry: PokemonEntry, gameId: string) {
   const notes = [];
 
   if (gameId && entry.nativeGames.includes(gameId)) {
-    notes.push("Native in this game");
+    notes.push("Native");
   } else if (gameId && entry.games.includes(gameId)) {
     notes.push("Trade or transfer");
   } else if (gameId) {
@@ -1464,7 +1505,11 @@ function getAvailabilityNotes(entry: PokemonEntry, gameId: string) {
   }
 
   if (isLegendaryPokemon(entry.id)) {
-    notes.push("Legendary flag");
+    notes.push("Legendary");
+  }
+
+  if (isParadoxPokemon(entry.id)) {
+    notes.push("Paradox");
   }
 
   return notes;

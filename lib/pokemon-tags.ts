@@ -7,6 +7,15 @@ const legendaryPokemonIds = new Set([
   1002, 1003, 1004, 1007, 1008, 1009, 1010, 1024, 1025,
 ]);
 
+const paradoxPokemonIds = new Set([
+  984, 985, 986, 987, 988, 989, 990, 991, 992, 993, 994, 995, 1005, 1006, 1009, 1010, 1020, 1021,
+  1022, 1023,
+]);
+
 export function isLegendaryPokemon(pokemonId: number) {
   return legendaryPokemonIds.has(pokemonId);
+}
+
+export function isParadoxPokemon(pokemonId: number) {
+  return paradoxPokemonIds.has(pokemonId);
 }

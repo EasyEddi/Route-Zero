@@ -1,5 +1,5 @@
 import type { PokemonEntry, TeamFilters } from "./types";
-import { isLegendaryPokemon } from "./pokemon-tags";
+import { isLegendaryPokemon, isParadoxPokemon } from "./pokemon-tags";
 
 type RollOptions = {
   dryRun?: boolean;
@@ -52,6 +52,10 @@ export function applyFilters(filters: TeamFilters, entries: PokemonEntry[]) {
     }
 
     if (!filters.allowLegendaryPokemon && isLegendaryPokemon(pokemon.id)) {
+      return false;
+    }
+
+    if (!filters.allowParadoxPokemon && isParadoxPokemon(pokemon.id)) {
       return false;
     }
 
