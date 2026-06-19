@@ -1958,6 +1958,7 @@ function getEggEncounterRow() {
     location: "Egg",
     levels: "varies",
     methods: "Obtain by hatching an egg from this Pokemon's evolution line.",
+    chance: 100,
     source: "Egg",
   });
 }
@@ -1985,10 +1986,10 @@ function isBreedingGame(gameId: string) {
   return !gamesWithoutBreeding.has(gameId);
 }
 
-function createFallbackRow(row: Omit<EncounterRow, "chance">): EncounterRow {
+function createFallbackRow(row: Omit<EncounterRow, "chance"> & { chance?: number | null }): EncounterRow {
   return {
     ...row,
-    chance: null,
+    chance: row.chance ?? null,
   };
 }
 

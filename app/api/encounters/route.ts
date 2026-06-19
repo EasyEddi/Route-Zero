@@ -88,6 +88,46 @@ const veekunVersionIdentifierMap: Record<string, string> = {
   shield: "shield",
 };
 
+const pokemonDbGameClassMap: Record<string, string[]> = {
+  red: ["red"],
+  blue: ["blue"],
+  yellow: ["yellow"],
+  gold: ["gold"],
+  silver: ["silver"],
+  crystal: ["crystal"],
+  ruby: ["ruby"],
+  sapphire: ["sapphire"],
+  emerald: ["emerald"],
+  "fire-red": ["firered"],
+  "leaf-green": ["leafgreen"],
+  diamond: ["diamond"],
+  pearl: ["pearl"],
+  platinum: ["platinum"],
+  "heart-gold": ["heartgold"],
+  "soul-silver": ["soulsilver"],
+  black: ["black"],
+  white: ["white"],
+  "black-2": ["black-2"],
+  "white-2": ["white-2"],
+  x: ["x"],
+  y: ["y"],
+  "omega-ruby": ["omega-ruby"],
+  "alpha-sapphire": ["alpha-sapphire"],
+  sun: ["sun"],
+  moon: ["moon"],
+  "ultra-sun": ["ultra-sun"],
+  "ultra-moon": ["ultra-moon"],
+  "lets-go-pikachu": ["lets-go-pikachu"],
+  "lets-go-eevee": ["lets-go-eevee"],
+  sword: ["sword"],
+  shield: ["shield"],
+  "brilliant-diamond": ["brilliant-diamond"],
+  "shining-pearl": ["shining-pearl"],
+  "legends-arceus": ["legends-arceus"],
+  scarlet: ["scarlet"],
+  violet: ["violet"],
+};
+
 const cacheRevalidateSeconds = 60 * 60 * 24 * 7;
 const veekunCsvBaseUrl = "https://raw.githubusercontent.com/veekun/pokedex/master/pokedex/data/csv";
 let veekunDataPromise: Promise<VeekunData> | null = null;
@@ -104,7 +144,7 @@ export async function GET(request: Request) {
     !Number.isInteger(pokemonId) ||
     pokemonId <= 0 ||
     !pokemonName ||
-    (!serebiiGameConfigs[gameId] && !veekunVersionIdentifierMap[gameId])
+    (!serebiiGameConfigs[gameId] && !veekunVersionIdentifierMap[gameId] && !pokemonDbGameClassMap[gameId])
   ) {
     return NextResponse.json({ rows: [] });
   }
@@ -126,7 +166,13 @@ async function getExternalEncounterRows(pokemonId: number, pokemonName: string, 
     return serebiiRows;
   }
 
-  return getVeekunEncounterRows(pokemonId, gameId).catch(() => []);
+  const veekunRows = await getVeekunEncounterRows(pokemonId, gameId).catch(() => []);
+
+  if (veekunRows.length > 0) {
+    return veekunRows;
+  }
+
+  return getPokemonDbEncounterRows(pokemonName, gameId).catch(() => []);
 }
 
 async function getSerebiiEncounterRows(pokemonId: number, pokemonName: string, gameId: string): Promise<ExternalEncounterRow[]> {
@@ -272,7 +318,7 @@ function getVeekunLevelText(minLevel: string, maxLevel: string) {
   const max = Number(maxLevel);
 
   if (!Number.isFinite(min) || !Number.isFinite(max)) {
-    return "unknown";
+    return "varies";
   }
 
   return min === max ? String(min) : `${min}-${max}`;
@@ -288,6 +334,93 @@ function getVeekunSource(methodIdentifier: string) {
   }
 
   return "Wild";
+}
+
+async function getPokemonDbEncounterRows(pokemonName: string, gameId: string): Promise<ExternalEncounterRow[]> {
+  const gameClasses = pokemonDbGameClassMap[gameId];
+
+  if (!gameClasses) {
+    return [];
+  }
+
+  const html = await fetchText(`https://pokemondb.net/pokedex/${getPokemonDbSlug(pokemonName)}`);
+  const locationsSection = getPokemonDbLocationsSection(html);
+
+  if (!locationsSection) {
+    return [];
+  }
+
+  const rows = [...locationsSection.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].flatMap((match) => {
+    const rowHtml = match[1];
+    const headerHtml = rowHtml.match(/<th[^>]*>([\s\S]*?)<\/th>/i)?.[1] ?? "";
+    const cellHtml = rowHtml.match(/<td[^>]*>([\s\S]*?)<\/td>/i)?.[1] ?? "";
+
+    if (!gameClasses.some((gameClass) => new RegExp(`class="[^"]*\\b${escapeRegExp(gameClass)}\\b`, "i").test(headerHtml))) {
+      return [];
+    }
+
+    const locations = getPokemonDbLocations(cellHtml);
+
+    if (locations.length === 0) {
+      return [];
+    }
+
+    return locations.map((location) => ({
+      location,
+      levels: "varies",
+      methods: "Listed as an in-game location by Pokemon Database. Exact encounter slots vary by area or subtable.",
+      chance: null,
+      source: "Wild",
+    }));
+  });
+
+  return summarizeEncounterRows(rows);
+}
+
+function getPokemonDbLocationsSection(html: string) {
+  const headingIndex = html.search(/<h2[^>]*>\s*Where to find/i);
+
+  if (headingIndex === -1) {
+    return null;
+  }
+
+  const sectionStart = html.slice(headingIndex);
+  const tableMatch = sectionStart.match(/<table class="vitals-table">([\s\S]*?)<\/table>/i);
+  return tableMatch?.[1] ?? null;
+}
+
+function getPokemonDbLocations(cellHtml: string) {
+  const text = normalizeCellText(cellHtml).toLowerCase();
+
+  if (
+    !text ||
+    text.includes("trade/migrate") ||
+    text.includes("not available") ||
+    text.includes("location data not yet available")
+  ) {
+    return [];
+  }
+
+  const linkedLocations = [...cellHtml.matchAll(/<a [^>]*href="\/location\/[^"]+"[^>]*>([\s\S]*?)<\/a>/gi)]
+    .map((match) => normalizeCellText(match[1]))
+    .filter(Boolean);
+
+  if (linkedLocations.length > 0) {
+    return linkedLocations;
+  }
+
+  const plainLocation = normalizeCellText(cellHtml);
+  return plainLocation ? [plainLocation] : [];
+}
+
+function getPokemonDbSlug(pokemonName: string) {
+  return pokemonName
+    .toLowerCase()
+    .replace(/[.'’]/g, "")
+    .replace(/♀/g, "-f")
+    .replace(/♂/g, "-m")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function getSerebiiLocationLinks(html: string, gameClasses: string[]) {
@@ -686,6 +819,10 @@ function parseChance(value: string | null | undefined) {
 
   const match = decodeHtml(value).match(/\d+(?:\.\d+)?/);
   return match ? Number(match[0]) : null;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function normalizeCellText(value: string) {
