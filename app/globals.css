@@ -1714,7 +1714,6 @@ button {
 }
 
 .evolutionRow > span {
-  min-width: 108px;
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 800;

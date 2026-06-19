@@ -999,7 +999,7 @@ export default function Home() {
                             </span>
                           </div>
                           <div>
-                            <span>Lv. {row.levels}</span>
+                            <span>lvl {row.levels}</span>
                             <small>{row.chance === null ? row.source : `${row.chance}%`}</small>
                           </div>
                         </article>
@@ -1543,6 +1543,29 @@ const starterFallbacks: Record<string, Record<number, { location: string; levels
 
 const fossilPokemonIds = new Set([138, 140, 142, 345, 347, 408, 410, 564, 566, 696, 698, 880, 881, 882, 883]);
 
+const supplementalEncounterFallbacks: Record<string, Record<number, Omit<EncounterRow, "chance">[]>> = {
+  scarlet: {
+    361: [
+      {
+        location: "Dalizapa Passage, Glaseado Mountain",
+        levels: "unknown",
+        methods: "Wild encounter listed in external location data.",
+        source: "Wild",
+      },
+    ],
+  },
+  violet: {
+    361: [
+      {
+        location: "Dalizapa Passage, Glaseado Mountain",
+        levels: "unknown",
+        methods: "Wild encounter listed in external location data.",
+        source: "Wild",
+      },
+    ],
+  },
+};
+
 const babyPokemonIds = new Set([
   172, 173, 174, 175, 236, 238, 239, 240, 298, 360, 406, 433, 438, 439, 440, 446, 447, 458, 848,
 ]);
@@ -1744,6 +1767,12 @@ function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolution
     ];
   }
 
+  const supplementalRows = supplementalEncounterFallbacks[gameId]?.[entry.id];
+
+  if (supplementalRows) {
+    return supplementalRows.map(createFallbackRow);
+  }
+
   if (babyPokemonIds.has(entry.id)) {
     return [
       createFallbackRow({
@@ -1759,8 +1788,8 @@ function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolution
     return [
       createFallbackRow({
         location: "Wild encounter",
-        levels: "varies",
-        methods: "Native to this game, but detailed route data is not available from PokeAPI.",
+        levels: "unknown",
+        methods: "Native to this game, but detailed route and level data is not available from PokeAPI.",
         source: "Wild",
       }),
     ];
