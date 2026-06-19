@@ -26,6 +26,7 @@ export type TeamFilters = {
   allowEventPokemon: boolean;
   allowTradePokemon: boolean;
   allowRoamingPokemon: boolean;
+  allowLegendaryPokemon: boolean;
   allowDuplicatePokemon: boolean;
   allowDuplicateTypes: boolean;
 };

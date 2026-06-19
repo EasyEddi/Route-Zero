@@ -1,4 +1,5 @@
 import type { PokemonEntry, TeamFilters } from "./types";
+import { isLegendaryPokemon } from "./pokemon-tags";
 
 type RollOptions = {
   dryRun?: boolean;
@@ -47,6 +48,10 @@ export function applyFilters(filters: TeamFilters, entries: PokemonEntry[]) {
     }
 
     if (!filters.allowRoamingPokemon && pokemon.roaming) {
+      return false;
+    }
+
+    if (!filters.allowLegendaryPokemon && isLegendaryPokemon(pokemon.id)) {
       return false;
     }
 

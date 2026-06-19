@@ -5,6 +5,7 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import {
   Ban,
   Copy,
+  Crown,
   Dice5,
   Eye,
   Gamepad2,
@@ -26,6 +27,7 @@ import {
 import { games } from "@/data/games";
 import { pokemon } from "@/data/pokemon";
 import { pokemonTypes } from "@/data/types";
+import { isLegendaryPokemon } from "@/lib/pokemon-tags";
 import { applyFilters, rollTeam } from "@/lib/team-generator";
 import type { PokemonEntry, TeamFilters } from "@/lib/types";
 
@@ -37,6 +39,7 @@ const defaultFilters: TeamFilters = {
   allowEventPokemon: false,
   allowTradePokemon: false,
   allowRoamingPokemon: false,
+  allowLegendaryPokemon: false,
   allowDuplicatePokemon: false,
   allowDuplicateTypes: false,
 };
@@ -478,6 +481,13 @@ export default function Home() {
               description="Roaming Pokemon can appear when this is enabled."
               checked={filters.allowRoamingPokemon}
               onChange={(checked) => updateFilter("allowRoamingPokemon", checked)}
+            />
+            <ToggleRow
+              icon={<Crown size={22} />}
+              label="Allow legendary-Pokemon"
+              description="Legendary, mythical, and similar special Pokemon can appear when this is enabled."
+              checked={filters.allowLegendaryPokemon}
+              onChange={(checked) => updateFilter("allowLegendaryPokemon", checked)}
             />
             <ToggleRow
               icon={<Repeat2 size={22} />}
@@ -1451,6 +1461,10 @@ function getAvailabilityNotes(entry: PokemonEntry, gameId: string) {
 
   if (entry.roaming) {
     notes.push("Roaming flag");
+  }
+
+  if (isLegendaryPokemon(entry.id)) {
+    notes.push("Legendary flag");
   }
 
   return notes;
