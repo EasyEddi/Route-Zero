@@ -78,6 +78,8 @@ export default function Home() {
   const [isGameOpen, setIsGameOpen] = useState(false);
   const [isTeamSizeOpen, setIsTeamSizeOpen] = useState(false);
   const [detailPokemon, setDetailPokemon] = useState<PokemonEntry | null>(null);
+  const [tagExplorer, setTagExplorer] = useState<TagExplorer | null>(null);
+  const [tagExplorerSearch, setTagExplorerSearch] = useState("");
   const [encounterRows, setEncounterRows] = useState<EncounterRow[]>([]);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -121,6 +123,31 @@ export default function Home() {
 
     return games.filter((game) => game.name.toLowerCase().includes(query) || game.shortName.toLowerCase().includes(query));
   }, [gameSearch]);
+  const tagExplorerPool = useMemo(() => {
+    if (!tagExplorer) {
+      return [];
+    }
+
+    return currentPool.filter((entry) => {
+      if (tagExplorer.kind === "type") {
+        return entry.types.includes(tagExplorer.value);
+      }
+
+      return getAvailabilityNotes(entry, filters.gameId).includes(tagExplorer.value);
+    });
+  }, [currentPool, filters.gameId, tagExplorer]);
+  const searchedTagExplorerPool = useMemo(() => {
+    const query = tagExplorerSearch.trim().toLowerCase();
+
+    if (!query) {
+      return tagExplorerPool;
+    }
+
+    return tagExplorerPool.filter((entry) => {
+      const dexNumber = String(entry.id).padStart(3, "0");
+      return entry.name.toLowerCase().startsWith(query) || dexNumber.startsWith(query);
+    });
+  }, [tagExplorerPool, tagExplorerSearch]);
   const detailEncounterRows = useMemo(() => {
     if (!detailPokemon || !filters.gameId) {
       return [];
@@ -286,6 +313,11 @@ export default function Home() {
 
   function openPokemonDetail(entry: PokemonEntry) {
     setDetailPokemon(entry);
+  }
+
+  function openTagExplorer(tag: TagExplorer) {
+    setTagExplorer(tag);
+    setTagExplorerSearch("");
   }
 
   function handleCardKeyDown(event: KeyboardEvent, entry: PokemonEntry) {
@@ -824,7 +856,7 @@ export default function Home() {
               <div>
                 <p>{selectedGame?.name ?? "Pokemon details"}</p>
                 <h2 id="pokemon-detail-title">{detailPokemon.name}</h2>
-                <span>#{String(detailPokemon.id).padStart(3, "0")} detailed route info</span>
+                <span>#{String(detailPokemon.id).padStart(3, "0")}</span>
               </div>
               <button className="modalCloseButton" type="button" onClick={() => setDetailPokemon(null)} aria-label="Close Pokemon details">
                 <X size={24} />
@@ -841,14 +873,27 @@ export default function Home() {
                   <h3>{detailPokemon.name}</h3>
                   <div className="typeList detailTypes">
                     {detailPokemon.types.map((type) => (
-                      <span className="typeBadge" data-type={type} key={type}>
+                      <button
+                        className="typeBadge detailTagButton"
+                        data-type={type}
+                        key={type}
+                        type="button"
+                        onClick={() => openTagExplorer({ kind: "type", value: type, label: typeLabels[type] })}
+                      >
                         {typeLabels[type]}
-                      </span>
+                      </button>
                     ))}
                   </div>
                   <div className="detailPills">
                     {getAvailabilityNotes(detailPokemon, filters.gameId).map((note) => (
-                      <span key={note}>{note}</span>
+                      <button
+                        className="detailPillButton"
+                        key={note}
+                        type="button"
+                        onClick={() => openTagExplorer({ kind: "tag", value: note, label: note })}
+                      >
+                        {note}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -907,6 +952,91 @@ export default function Home() {
                   </span>
                 </div>
               </section>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {tagExplorer ? (
+        <div className="modalOverlay tagExplorerOverlay" role="dialog" aria-modal="true" aria-labelledby="tag-explorer-title">
+          <section className="poolModal">
+            <div className="poolModalHeader">
+              <div>
+                <p>{selectedGame?.name ?? "Current filters"}</p>
+                <h2 id="tag-explorer-title">{tagExplorer.label}</h2>
+                <span>{searchedTagExplorerPool.length} of {tagExplorerPool.length} matching Pokemon shown</span>
+              </div>
+              <button className="modalCloseButton" type="button" onClick={() => setTagExplorer(null)} aria-label="Close tag explorer">
+                <X size={24} />
+              </button>
+            </div>
+
+            <label className="poolSearch">
+              <Search size={19} />
+              <input
+                type="search"
+                value={tagExplorerSearch}
+                onChange={(event) => setTagExplorerSearch(event.target.value)}
+                placeholder="Search Pokemon or dex number"
+              />
+            </label>
+
+            <div className="poolGrid" aria-label={`${tagExplorer.label} Pokemon`}>
+              {searchedTagExplorerPool.map((entry) => (
+                (() => {
+                  const cardKey = `tag-${tagExplorer.kind}-${tagExplorer.value}-${entry.id}`;
+                  const isShiny = Boolean(shinyCards[cardKey]);
+
+                  return (
+                    <article
+                      className="poolCard"
+                      data-shiny={isShiny}
+                      key={entry.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        setTagExplorer(null);
+                        openPokemonDetail(entry);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setTagExplorer(null);
+                          openPokemonDetail(entry);
+                        }
+                      }}
+                    >
+                      <span className="poolDex">{String(entry.id).padStart(3, "0")}</span>
+                      <SpecialBadges entry={entry} compact />
+                      <ShinyToggle
+                        active={isShiny}
+                        onClick={() => toggleShinyCard(cardKey, entry)}
+                        onWarmup={() => warmShinySprite(entry)}
+                      />
+                      <img
+                        src={getPokemonSprite(entry, isShiny)}
+                        alt=""
+                        className={isShiny ? "shinySprite" : undefined}
+                        data-shiny={isShiny}
+                        key={`${entry.id}-${isShiny ? "shiny" : "normal"}`}
+                        onError={(event) => {
+                          if (isShiny) {
+                            event.currentTarget.src = entry.sprite;
+                          }
+                        }}
+                      />
+                      <h3>{entry.name}</h3>
+                      <div className="typeList">
+                        {entry.types.map((type) => (
+                          <span className="typeBadge compactBadge" data-type={type} key={type}>
+                            {typeLabels[type]}
+                          </span>
+                        ))}
+                      </div>
+                    </article>
+                  );
+                })()
+              ))}
             </div>
           </section>
         </div>
@@ -1130,6 +1260,12 @@ type EncounterRow = {
   methods: string;
   chance: number | null;
   source: string;
+};
+
+type TagExplorer = {
+  kind: "tag" | "type";
+  value: string;
+  label: string;
 };
 
 type PokeApiEncounter = {

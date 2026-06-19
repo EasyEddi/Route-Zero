@@ -1361,6 +1361,10 @@ button {
   z-index: 30;
 }
 
+.tagExplorerOverlay {
+  z-index: 36;
+}
+
 .appRoot[data-theme="light"] .modalOverlay {
   background: rgba(226, 234, 247, 0.72);
 }
@@ -1563,7 +1567,7 @@ button {
   margin-top: 18px;
 }
 
-.detailPills span {
+.detailPillButton {
   padding: 8px 11px;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 999px;
@@ -1571,9 +1575,23 @@ button {
   background: rgba(5, 15, 29, 0.56);
   font-size: 0.88rem;
   font-weight: 800;
+  cursor: pointer;
 }
 
-.appRoot[data-theme="light"] .detailPills span {
+.detailPillButton:hover,
+.detailPillButton:focus-visible,
+.detailTagButton:hover,
+.detailTagButton:focus-visible {
+  outline: 0;
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(177, 140, 255, 0.24);
+}
+
+.detailTagButton {
+  cursor: pointer;
+}
+
+.appRoot[data-theme="light"] .detailPillButton {
   border-color: rgba(28, 42, 64, 0.12);
   color: #243149;
   background: rgba(255, 255, 255, 0.68);
