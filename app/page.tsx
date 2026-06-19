@@ -81,6 +81,7 @@ export default function Home() {
   const [tagExplorer, setTagExplorer] = useState<TagExplorer | null>(null);
   const [tagExplorerSearch, setTagExplorerSearch] = useState("");
   const [evolutionInfo, setEvolutionInfo] = useState<EvolutionInfo | null>(null);
+  const [canHatchFromEgg, setCanHatchFromEgg] = useState(false);
   const [encounterRows, setEncounterRows] = useState<EncounterRow[]>([]);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -154,8 +155,14 @@ export default function Home() {
       return [];
     }
 
-    return encounterRows.length > 0 ? encounterRows : getFallbackEncounterRows(detailPokemon, filters.gameId, evolutionInfo);
-  }, [detailPokemon, encounterRows, evolutionInfo, filters.gameId]);
+    const specialRows = getSpecialEncounterRows(detailPokemon, filters.gameId, evolutionInfo, canHatchFromEgg);
+
+    if (encounterRows.length > 0) {
+      return mergeEncounterRows([...encounterRows, ...specialRows]);
+    }
+
+    return mergeEncounterRows(getFallbackEncounterRows(detailPokemon, filters.gameId, evolutionInfo, canHatchFromEgg));
+  }, [canHatchFromEgg, detailPokemon, encounterRows, evolutionInfo, filters.gameId]);
 
   useEffect(() => {
     return () => {
@@ -235,11 +242,13 @@ export default function Home() {
   useEffect(() => {
     if (!detailPokemon) {
       setEvolutionInfo(null);
+      setCanHatchFromEgg(false);
       return;
     }
 
     const controller = new AbortController();
     setEvolutionInfo(null);
+    setCanHatchFromEgg(false);
 
     void fetch(`https://pokeapi.co/api/v2/pokemon-species/${detailPokemon.id}`, {
       signal: controller.signal,
@@ -251,7 +260,13 @@ export default function Home() {
 
         return response.json() as Promise<PokeApiSpecies>;
       })
-      .then((species) => fetch(species.evolution_chain.url, { signal: controller.signal }))
+      .then((species) => {
+        if (!controller.signal.aborted) {
+          setCanHatchFromEgg(canPokemonSpeciesHatchFromEgg(species));
+        }
+
+        return fetch(species.evolution_chain.url, { signal: controller.signal });
+      })
       .then((response) => {
         if (!response.ok) {
           throw new Error("Evolution chain could not be loaded.");
@@ -270,6 +285,7 @@ export default function Home() {
         }
 
         setEvolutionInfo(null);
+        setCanHatchFromEgg(false);
       });
 
     return () => controller.abort();
@@ -1435,6 +1451,9 @@ type PokeApiSpecies = {
   evolution_chain: {
     url: string;
   };
+  egg_groups: {
+    name: string;
+  }[];
 };
 
 type PokeApiEvolutionChain = {
@@ -1594,10 +1613,6 @@ const supplementalEncounterFallbacks: Record<string, Record<number, Omit<Encount
   },
 };
 
-const babyPokemonIds = new Set([
-  172, 173, 174, 175, 236, 238, 239, 240, 298, 360, 406, 433, 438, 439, 440, 446, 447, 458, 848,
-]);
-
 const staticPokemonIds = new Set([
   144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386,
   480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 638, 639, 640, 641, 642, 643,
@@ -1701,7 +1716,12 @@ function getEncounterRows(encounters: PokeApiEncounter[], versionId: string): En
   return summarizePokeApiEncounterRows(rows).sort((first, second) => first.location.localeCompare(second.location));
 }
 
-function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolutionInfo: EvolutionInfo | null): EncounterRow[] {
+function getFallbackEncounterRows(
+  entry: PokemonEntry,
+  gameId: string,
+  evolutionInfo: EvolutionInfo | null,
+  canHatchFromEgg: boolean,
+): EncounterRow[] {
   const starterRow = getStarterFallback(entry.id, gameId);
 
   if (starterRow) {
@@ -1799,14 +1819,9 @@ function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolution
     return supplementalRows.map(createFallbackRow);
   }
 
-  if (babyPokemonIds.has(entry.id)) {
+  if (canShowEggRow(entry, gameId, evolutionInfo, canHatchFromEgg)) {
     return [
-      createFallbackRow({
-        location: "Egg",
-        levels: "varies",
-        methods: "Obtain by hatching an egg from its evolution line.",
-        source: "Egg",
-      }),
+      getEggEncounterRow(),
     ];
   }
 
@@ -1831,6 +1846,143 @@ function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolution
       source: entry.fullyEvolved ? "Evolution" : "Special",
     }),
   ];
+}
+
+function getSpecialEncounterRows(
+  entry: PokemonEntry,
+  gameId: string,
+  evolutionInfo: EvolutionInfo | null,
+  canHatchFromEgg: boolean,
+) {
+  if (!entry.games.includes(gameId)) {
+    return [];
+  }
+
+  const rows: EncounterRow[] = [];
+  const starterRow = getStarterFallback(entry.id, gameId);
+  const fossilRow = getFossilFallback(entry.id, gameId);
+  const supplementalRows = supplementalEncounterFallbacks[gameId]?.[entry.id];
+
+  if (starterRow) {
+    rows.push(starterRow);
+  }
+
+  if (fossilRow && entry.nativeGames.includes(gameId)) {
+    rows.push(fossilRow);
+  }
+
+  if (entry.eventOnly) {
+    rows.push(
+      createFallbackRow({
+        location: "Event distribution",
+        levels: "varies",
+        methods: "Event-only Pokemon. Usually not found as a normal in-game route encounter.",
+        source: "Event",
+      }),
+    );
+  }
+
+  if (entry.tradeOnly) {
+    rows.push(
+      createFallbackRow({
+        location: "Trade",
+        levels: "varies",
+        methods: "Obtain through a trade requirement for this game.",
+        source: "Trade",
+      }),
+    );
+  }
+
+  if (entry.roaming) {
+    rows.push(
+      createFallbackRow({
+        location: "Roaming encounter",
+        levels: "varies",
+        methods: "Roams across routes after the story trigger for this game.",
+        source: "Roaming",
+      }),
+    );
+  }
+
+  if (staticPokemonIds.has(entry.id)) {
+    rows.push(
+      createFallbackRow({
+        location: "Static encounter",
+        levels: "varies",
+        methods: "One-time overworld encounter for this game.",
+        source: "Static",
+      }),
+    );
+  }
+
+  if (evolutionInfo?.from) {
+    rows.push(
+      createFallbackRow({
+        location: "Evolution",
+        levels: "varies",
+        methods: "Evolve from",
+        methodLink: evolutionInfo.from,
+        methodSuffix: evolutionInfo.from.method ? `(${evolutionInfo.from.method})` : undefined,
+        source: "Evolution",
+      }),
+    );
+  }
+
+  if (supplementalRows) {
+    rows.push(...supplementalRows.map(createFallbackRow));
+  }
+
+  if (canShowEggRow(entry, gameId, evolutionInfo, canHatchFromEgg)) {
+    rows.push(getEggEncounterRow());
+  }
+
+  return rows;
+}
+
+function mergeEncounterRows(rows: EncounterRow[]) {
+  return rows.filter(
+    (row, index, all) =>
+      all.findIndex(
+        (item) =>
+          item.location === row.location &&
+          item.levels === row.levels &&
+          item.methods === row.methods &&
+          item.source === row.source &&
+          item.methodLink?.id === row.methodLink?.id,
+      ) === index,
+  );
+}
+
+function getEggEncounterRow() {
+  return createFallbackRow({
+    location: "Egg",
+    levels: "varies",
+    methods: "Obtain by hatching an egg from this Pokemon's evolution line.",
+    source: "Egg",
+  });
+}
+
+function canShowEggRow(
+  entry: PokemonEntry,
+  gameId: string,
+  evolutionInfo: EvolutionInfo | null,
+  canHatchFromEgg: boolean,
+) {
+  return (
+    canHatchFromEgg &&
+    entry.nativeGames.includes(gameId) &&
+    isBreedingGame(gameId) &&
+    !evolutionInfo?.from
+  );
+}
+
+function canPokemonSpeciesHatchFromEgg(species: PokeApiSpecies) {
+  return species.egg_groups.some((group) => group.name !== "no-eggs" && group.name !== "ditto");
+}
+
+function isBreedingGame(gameId: string) {
+  const gamesWithoutBreeding = new Set(["red", "blue", "yellow", "lets-go-pikachu", "lets-go-eevee", "legends-arceus", "legends-za"]);
+  return !gamesWithoutBreeding.has(gameId);
 }
 
 function createFallbackRow(row: Omit<EncounterRow, "chance">): EncounterRow {
