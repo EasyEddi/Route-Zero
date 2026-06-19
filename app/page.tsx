@@ -1958,7 +1958,6 @@ function getEggEncounterRow() {
     location: "Egg",
     levels: "varies",
     methods: "Obtain by hatching an egg from this Pokemon's evolution line.",
-    chance: 100,
     source: "Egg",
   });
 }
