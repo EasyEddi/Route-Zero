@@ -1022,7 +1022,7 @@ export default function Home() {
                           </div>
                           <div>
                             <span>lvl {row.levels}</span>
-                            <small>{row.chance === null ? row.source : `${row.chance}%`}</small>
+                            <small>{row.chance === null ? (row.source === "Wild" ? "varies" : row.source) : `${row.chance}%`}</small>
                           </div>
                         </article>
                       );
@@ -1681,20 +1681,18 @@ function getEncounterRows(encounters: PokeApiEncounter[], versionId: string): En
     }
 
     const levels = getLevelText(versionDetail.encounter_details);
-    const methods = [
-      ...new Set(versionDetail.encounter_details.map((detail) => formatLabel(detail.method.name))),
-    ];
+    const methods = [...new Set(versionDetail.encounter_details.map((detail) => describePokeApiMethod(detail.method.name)))];
 
     rows.push({
-      location: formatLabel(encounter.location_area.name.replace(/-area$/, "")),
+      location: formatEncounterLocation(encounter.location_area.name.replace(/-area$/, "")),
       levels,
-      methods: methods.length > 0 ? methods.join(", ") : "Special encounter",
+      methods: methods.length > 0 ? methods.join(" ") : "Special encounter in this area.",
       chance: versionDetail.max_chance,
       source: "Wild",
     });
   });
 
-  return rows.sort((first, second) => first.location.localeCompare(second.location));
+  return summarizePokeApiEncounterRows(rows).sort((first, second) => first.location.localeCompare(second.location));
 }
 
 function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolutionInfo: EvolutionInfo | null): EncounterRow[] {
@@ -1849,6 +1847,115 @@ function getLevelText(details: PokeApiEncounter["version_details"][number]["enco
 
   const uniqueRanges = [...new Set(levelRanges)];
   return uniqueRanges.length > 0 ? uniqueRanges.join(", ") : "unknown";
+}
+
+function summarizePokeApiEncounterRows(rows: EncounterRow[]) {
+  const grouped = new Map<string, EncounterRow>();
+
+  rows.forEach((row) => {
+    const normalized = normalizeRepeatedEncounterLocation(row.location);
+    const key = [normalized.location, row.levels, row.methods, row.chance ?? "any", row.source].join("|");
+    const existing = grouped.get(key);
+
+    if (!existing) {
+      grouped.set(key, {
+        ...row,
+        location: normalized.location,
+        methods: normalized.note ? `${row.methods} ${normalized.note}` : row.methods,
+      });
+      return;
+    }
+
+    if (normalized.area && !existing.methods.includes(normalized.area)) {
+      existing.methods = `${existing.methods.replace(/\.$/, "")}, ${normalized.area}.`;
+    }
+  });
+
+  return [...grouped.values()];
+}
+
+function normalizeRepeatedEncounterLocation(location: string) {
+  const safariMatch = location.match(/^(.*Safari Zone)\s+(.+)$/i);
+
+  if (!safariMatch) {
+    return { location, area: null, note: null };
+  }
+
+  const area = safariMatch[2];
+  return {
+    location: safariMatch[1],
+    area,
+    note: `Listed Safari Zone areas: ${area}.`,
+  };
+}
+
+function formatEncounterLocation(location: string) {
+  return formatLabel(location)
+    .replace(/\bb(\d+)f\b/gi, (_match, floor: string) => `basement ${getOrdinal(Number(floor))} floor`)
+    .replace(/\b(\d+)f\b/gi, (_match, floor: string) => `${getOrdinal(Number(floor))} floor`);
+}
+
+function getOrdinal(value: number) {
+  const suffix = value % 10 === 1 && value % 100 !== 11 ? "st" : value % 10 === 2 && value % 100 !== 12 ? "nd" : value % 10 === 3 && value % 100 !== 13 ? "rd" : "th";
+  return `${value}${suffix}`;
+}
+
+function describePokeApiMethod(method: string) {
+  const normalized = method.toLowerCase();
+
+  if (normalized === "walk") {
+    return "Encounter while walking through the listed wild area.";
+  }
+
+  if (normalized === "surf") {
+    return "Encounter while surfing on water.";
+  }
+
+  if (normalized === "old-rod") {
+    return "Fish here with the Old Rod.";
+  }
+
+  if (normalized === "good-rod") {
+    return "Fish here with the Good Rod.";
+  }
+
+  if (normalized === "super-rod") {
+    return "Fish here with the Super Rod.";
+  }
+
+  if (normalized === "rock-smash") {
+    return "Break rocks in this area.";
+  }
+
+  if (normalized === "headbutt") {
+    return "Use Headbutt on trees in this area.";
+  }
+
+  if (normalized === "dark-grass") {
+    return "Encounter while walking through dark grass.";
+  }
+
+  if (normalized === "grass-spots") {
+    return "Encounter in shaking grass spots.";
+  }
+
+  if (normalized === "cave-spots") {
+    return "Encounter in dust clouds inside caves.";
+  }
+
+  if (normalized === "bridge-spots") {
+    return "Encounter in moving spots on bridges.";
+  }
+
+  if (normalized === "super-rod-spots") {
+    return "Fish at rippling water spots with the Super Rod.";
+  }
+
+  if (normalized === "gift") {
+    return "Receive it as a gift in this area.";
+  }
+
+  return `Encounter method: ${formatLabel(method)}.`;
 }
 
 function getEvolutionInfo(chain: PokeApiEvolutionChain, pokemonId: number): EvolutionInfo {

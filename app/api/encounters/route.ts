@@ -4,8 +4,14 @@ type ExternalEncounterRow = {
   location: string;
   levels: string;
   methods: string;
-  chance: null;
+  chance: number | null;
   source: string;
+};
+
+type EncounterDetail = {
+  levels: string;
+  chance: number | null;
+  method: string;
 };
 
 type SerebiiGameConfig = {
@@ -68,23 +74,23 @@ async function getSerebiiEncounterRows(pokemonId: number, pokemonName: string, g
 
   const rows = await Promise.all(
     locations.map(async (location) => {
-      const levels = await getSerebiiLocationLevels(location.href, pokemonId, pokemonName, config);
+      const details = await getSerebiiLocationDetails(location.href, pokemonId, pokemonName, config);
 
-      if (!levels) {
+      if (details.length === 0) {
         return null;
       }
 
-      return {
+      return details.map((detail) => ({
         location: location.name,
-        levels,
-        methods: "Wild encounter from Serebii Pokearth spawn data.",
-        chance: null,
+        levels: detail.levels,
+        methods: detail.method,
+        chance: detail.chance,
         source: "Wild",
-      };
+      }));
     }),
   );
 
-  const parsedRows = rows.filter((row): row is ExternalEncounterRow => Boolean(row));
+  const parsedRows = summarizeEncounterRows(rows.flat().filter((row): row is ExternalEncounterRow => Boolean(row)));
 
   if (parsedRows.length > 0) {
     return parsedRows;
@@ -110,7 +116,7 @@ function getSerebiiLocationLinks(html: string, gameClasses: string[]) {
   return links.filter((link, index, all) => all.findIndex((item) => item.href === link.href) === index);
 }
 
-async function getSerebiiLocationLevels(
+async function getSerebiiLocationDetails(
   locationUrl: string,
   pokemonId: number,
   pokemonName: string,
@@ -120,26 +126,35 @@ async function getSerebiiLocationLevels(
   const tableIds = getPokemonTableIds(locationHtml, pokemonId);
 
   if (tableIds.length === 0) {
-    return getPokemonLevelFromSpawnTable(locationHtml, pokemonName, config.locationTableClasses);
+    return getPokemonEncounterDetailsFromTables(locationHtml, pokemonName, config.locationTableClasses);
   }
 
   const locationBase = locationUrl.replace(/\/[^/]+$/, "");
-  const levelRanges = await Promise.all(
+  const details = await Promise.all(
     tableIds.slice(0, 80).map(async (tableId) => {
       const tableHtml = await fetchText(`${locationBase}/spawntable/${tableId}.txt`);
-      return getPokemonLevelFromSpawnTable(tableHtml, pokemonName, config.locationTableClasses);
+      return getPokemonEncounterDetailsFromTables(tableHtml, pokemonName, config.locationTableClasses);
     }),
   );
-  const parsedLevels = levelRanges.flatMap((range) => parseLevelRange(range));
+  const flattenedDetails = details.flat();
+  const parsedLevels = flattenedDetails.flatMap((detail) => parseLevelRange(detail.levels));
 
   if (parsedLevels.length === 0) {
-    return null;
+    return flattenedDetails;
   }
 
   const min = Math.min(...parsedLevels);
   const max = Math.max(...parsedLevels);
+  const chance = getBestChance(flattenedDetails.map((detail) => detail.chance));
+  const methods = [...new Set(flattenedDetails.map((detail) => detail.method))];
 
-  return min === max ? String(min) : `${min}-${max}`;
+  return [
+    {
+      levels: min === max ? String(min) : `${min}-${max}`,
+      chance,
+      method: methods.length === 1 ? methods[0] : "Wild encounter in this area's listed encounter tables.",
+    },
+  ];
 }
 
 function getPokemonTableIds(html: string, pokemonId: number) {
@@ -154,7 +169,7 @@ function getPokemonTableIds(html: string, pokemonId: number) {
   return [...new Set(ids)];
 }
 
-function getPokemonLevelFromSpawnTable(html: string, pokemonName: string, sectionClasses?: string[]) {
+function getPokemonEncounterDetailsFromTables(html: string, pokemonName: string, sectionClasses?: string[]): EncounterDetail[] {
   const groups = sectionClasses
     ? html
         .split(/<table/i)
@@ -171,18 +186,30 @@ function getPokemonLevelFromSpawnTable(html: string, pokemonName: string, sectio
       continue;
     }
 
+    const method = getSerebiiMethodText(group);
     const levels = [...group.matchAll(/<b>Level<\/b><br\s*\/?>\s*([^<]+?)\s*<\/td>/g)].map((match) =>
       decodeHtml(match[1]).replace(/\s+/g, " ").trim(),
     );
     const directLevels = [...group.matchAll(/class="level"[^>]*>\s*([^<]+?)\s*<\/td>/g)].map((match) =>
       decodeHtml(match[1]).replace(/\s+/g, " ").trim(),
     );
+    const rates = [...group.matchAll(/class="rate"[^>]*>\s*([^<]+?)\s*<\/td>/g)].map((match) => parseChance(match[1]));
 
     const level = levels[index] ?? directLevels[index] ?? null;
-    return level ? normalizeLevelText(level) : null;
+    if (!level) {
+      continue;
+    }
+
+    return [
+      {
+        levels: normalizeLevelText(level),
+        chance: rates[index] ?? null,
+        method,
+      },
+    ];
   }
 
-  return null;
+  return [];
 }
 
 async function getSerebiiDetailedLocationRows(config: SerebiiGameConfig, pokemonId: number): Promise<ExternalEncounterRow[]> {
@@ -200,17 +227,62 @@ async function getSerebiiDetailedLocationRows(config: SerebiiGameConfig, pokemon
   const nextSectionIndex = html.slice(anchorIndex + 1).search(/<table class="dextable"><tr >\s*<td class="fooevo"/i);
   const section =
     nextSectionIndex === -1 ? html.slice(anchorIndex) : html.slice(anchorIndex, anchorIndex + 1 + nextSectionIndex);
-  const rows = [...section.matchAll(/<a href="\/pokearth\/[^"]+">([\s\S]*?)<\/a>[\s\S]*?<td class="fooinfo">Lv\.\s*([^<]+)<\/td>/g)]
-    .map((match) => ({
-      location: decodeHtml(match[1]),
-      levels: normalizeLevelText(match[2]),
-      methods: "Wild encounter from Serebii location details.",
-      chance: null,
-      source: "Wild",
-    }))
+  const rows = getDetailedRowsFromLocationSection(section)
     .filter((row) => row.levels);
 
-  return rows.filter((row, index, all) => all.findIndex((item) => item.location === row.location && item.levels === row.levels) === index);
+  return summarizeEncounterRows(rows);
+}
+
+function getDetailedRowsFromLocationSection(section: string): ExternalEncounterRow[] {
+  const tables = section
+    .split(/<table class="dextable"/i)
+    .slice(1)
+    .map((table) => `<table class="dextable"${table}`);
+  const parseTargets = tables.length > 0 ? tables : [section];
+
+  return parseTargets.flatMap((table) => {
+    const headers = [...table.matchAll(/class="lochead"[^>]*>([\s\S]*?)<\/td>/g)].map((match) =>
+      normalizeCellText(match[1]).toLowerCase(),
+    );
+    const rows = [...table.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].map((match) => match[1]);
+
+    return rows.flatMap((rowHtml) => {
+      const cells = [...rowHtml.matchAll(/class="fooinfo"[^>]*>([\s\S]*?)<\/td>/g)].map((match) => normalizeCellText(match[1]));
+
+      if (cells.length < 2) {
+        return [];
+      }
+
+      const location = getCellValue(headers, cells, "location") ?? cells[0];
+      const method = getCellValue(headers, cells, "method");
+      const time = getCellValue(headers, cells, "time");
+      const rarity = getCellValue(headers, cells, "rarity");
+      const area =
+        getCellValue(headers, cells, "grass patch") ??
+        getCellValue(headers, cells, "area") ??
+        getCellValue(headers, cells, "details");
+      const level = getCellValue(headers, cells, "level") ?? cells[cells.length - 1];
+
+      if (!location || !level || !/\d/.test(level)) {
+        return [];
+      }
+
+      return [
+        {
+          location,
+          levels: normalizeLevelText(level),
+          methods: describeSerebiiDetailedMethod(method, time, area),
+          chance: parseChance(rarity),
+          source: "Wild",
+        },
+      ];
+    });
+  });
+}
+
+function getCellValue(headers: string[], cells: string[], label: string) {
+  const index = headers.findIndex((header) => header.includes(label));
+  return index === -1 ? null : cells[index] ?? null;
 }
 
 async function fetchText(url: string) {
@@ -240,6 +312,144 @@ function normalizeLevelText(levels: string) {
   return decodeHtml(levels)
     .replace(/^Lv\.\s*/i, "")
     .replace(/\s*-\s*/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function summarizeEncounterRows(rows: ExternalEncounterRow[]) {
+  const grouped = new Map<string, ExternalEncounterRow>();
+
+  rows.forEach((row) => {
+    const location = normalizeEncounterLocation(row.location);
+    const baseMethod = getBaseMethodText(row.methods);
+    const key = [location, row.levels, baseMethod, row.chance ?? "any", row.source].join("|");
+    const existing = grouped.get(key);
+
+    if (!existing) {
+      grouped.set(key, { ...row, location, methods: row.methods });
+      return;
+    }
+
+    existing.methods = mergeMethodText(existing.methods, row.methods);
+    existing.location = location;
+  });
+
+  return [...grouped.values()].filter(
+    (row, index, all) =>
+      all.findIndex(
+        (item) =>
+          item.location === row.location &&
+          item.levels === row.levels &&
+          item.methods === row.methods &&
+          item.chance === row.chance &&
+          item.source === row.source,
+      ) === index,
+  );
+}
+
+function getBaseMethodText(method: string) {
+  return method.replace(/\s+Available during [^.]+\./gi, "").trim();
+}
+
+function mergeMethodText(existing: string, incoming: string) {
+  const base = getBaseMethodText(existing);
+  const times = [...existing.matchAll(/Available during ([^.]+)\./gi), ...incoming.matchAll(/Available during ([^.]+)\./gi)].map(
+    (match) => match[1].toLowerCase(),
+  );
+  const uniqueTimes = [...new Set(times)];
+
+  if (uniqueTimes.length === 0) {
+    return existing;
+  }
+
+  return `${base} Available during ${uniqueTimes.join(" or ")}.`;
+}
+
+function normalizeEncounterLocation(location: string) {
+  return location
+    .replace(/\s+\d+\s+(East|West|North|South)$/i, "")
+    .replace(/\s+Middle$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getBestChance(chances: (number | null)[]) {
+  const numericChances = chances.filter((chance): chance is number => typeof chance === "number");
+  return numericChances.length > 0 ? Math.max(...numericChances) : null;
+}
+
+function getSerebiiMethodText(html: string) {
+  const titleMatch =
+    html.match(/<a name="[^"]+">\s*<h4>([\s\S]*?)<\/h4>\s*<\/a>/i) ??
+    html.match(/<a name="[^"]+">([\s\S]*?)<\/a>/i);
+  const title = titleMatch ? normalizeCellText(titleMatch[1]) : "";
+  return describeMethod(title);
+}
+
+function describeSerebiiDetailedMethod(method: string | null, time: string | null, area: string | null) {
+  const parts = [describeMethod(method ?? "Wild encounter")];
+
+  if (time && !/^all day$/i.test(time)) {
+    parts.push(`Available during ${time.toLowerCase()}.`);
+  }
+
+  if (area && !/^all areas$/i.test(area)) {
+    parts.push(`Specific area: ${area}.`);
+  }
+
+  return parts.join(" ");
+}
+
+function describeMethod(method: string) {
+  const normalized = method.replace(/\s*\/\s*/g, " / ").replace(/\s+/g, " ").trim();
+  const lower = normalized.toLowerCase();
+
+  if (lower.includes("super rod")) {
+    return "Fish here with the Super Rod.";
+  }
+
+  if (lower.includes("good rod")) {
+    return "Fish here with the Good Rod.";
+  }
+
+  if (lower.includes("old rod")) {
+    return "Fish here with the Old Rod.";
+  }
+
+  if (lower.includes("surf")) {
+    return "Encounter while surfing on water.";
+  }
+
+  if (lower.includes("grass") || lower.includes("walk")) {
+    return "Encounter while walking through grass or the listed wild area.";
+  }
+
+  if (lower.includes("curry")) {
+    return "Can appear after making curry in camp.";
+  }
+
+  if (lower.includes("overworld")) {
+    return "Visible overworld encounter in this area.";
+  }
+
+  if (normalized) {
+    return `Encounter method: ${normalized}.`;
+  }
+
+  return "Wild encounter in this area's listed encounter table.";
+}
+
+function parseChance(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const match = decodeHtml(value).match(/\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
+function normalizeCellText(value: string) {
+  return decodeHtml(value)
     .replace(/\s+/g, " ")
     .trim();
 }
