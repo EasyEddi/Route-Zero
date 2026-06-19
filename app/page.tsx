@@ -191,7 +191,29 @@ export default function Home() {
       })
       .then((encounters) => {
         const versionId = getPokeApiVersionId(filters.gameId);
-        setEncounterRows(getEncounterRows(encounters, versionId));
+        const rows = getEncounterRows(encounters, versionId);
+
+        if (rows.length > 0) {
+          setEncounterRows(rows);
+          return null;
+        }
+
+        return fetch(
+          `/api/encounters?pokemonId=${detailPokemon.id}&gameId=${filters.gameId}&name=${encodeURIComponent(
+            detailPokemon.name,
+          )}`,
+          { signal: controller.signal },
+        )
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("External encounter fallback could not be loaded.");
+            }
+
+            return response.json() as Promise<{ rows: EncounterRow[] }>;
+          })
+          .then((payload) => {
+            setEncounterRows(payload.rows);
+          });
       })
       .catch((error) => {
         if (error instanceof DOMException && error.name === "AbortError") {
