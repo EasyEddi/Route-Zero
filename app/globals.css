@@ -1123,9 +1123,10 @@ button {
   left: 18px;
   display: flex;
   max-width: calc(100% - 72px);
+  flex-direction: column;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: 6px;
-  justify-content: flex-start;
 }
 
 .specialBadges span {
