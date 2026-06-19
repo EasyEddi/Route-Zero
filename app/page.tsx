@@ -605,23 +605,22 @@ export default function Home() {
       return;
     }
 
+    const animationPool = getAnimationPool(
+      filters.allowDuplicatePokemon ? pool : pool.filter((entry) => !lockedPokemonIds.includes(entry.id)),
+    );
+    const initialRollingSlots = getRandomSlots(animationPool, filters.teamSize, lockedEntries);
+
     setIsRolling(true);
     setIsRevealing(false);
     setRevealedCount(lockedSlotCount);
     setError(null);
     setTeamIds([]);
-    setRollingSlots([]);
-
-    const animationPool = getAnimationPool(
-      filters.allowDuplicatePokemon ? pool : pool.filter((entry) => !lockedPokemonIds.includes(entry.id)),
-    );
+    setRollingSlots(initialRollingSlots);
 
     void preloadPokemonSprites([...animationPool, ...lockedEntries]).then(() => {
       if (rollRun !== rollRunRef.current) {
         return;
       }
-
-      setRollingSlots(getRandomSlots(animationPool, filters.teamSize, lockedEntries));
 
       rollIntervalRef.current = window.setInterval(() => {
         setRollingSlots(getRandomSlots(animationPool, filters.teamSize, lockedEntries));
