@@ -152,7 +152,7 @@ async function getSerebiiLocationDetails(
     {
       levels: min === max ? String(min) : `${min}-${max}`,
       chance,
-      method: methods.length === 1 ? methods[0] : "Wild encounter in this area's listed encounter tables.",
+      method: methods.length === 1 ? methods[0] : "Catch in this area's listed wild encounter tables.",
     },
   ];
 }
@@ -432,11 +432,15 @@ function describeMethod(method: string) {
     return "Visible overworld encounter in this area.";
   }
 
-  if (normalized) {
-    return `Encounter method: ${normalized}.`;
+  if (lower.includes("wild pok")) {
+    return "Catch as a wild Pokemon in this area.";
   }
 
-  return "Wild encounter in this area's listed encounter table.";
+  if (normalized) {
+    return `Use ${normalized.toLowerCase()} in this area.`;
+  }
+
+  return "Catch in this area's listed wild encounter table.";
 }
 
 function parseChance(value: string | null | undefined) {
@@ -464,6 +468,7 @@ function decodeHtml(value: string) {
     .replace(/&amp;/g, "&")
     .replace(/&#39;/g, "'")
     .replace(/&quot;/g, '"')
+    .replace(/Pok�mon/g, "Pokemon")
     .replace(/<[^>]+>/g, "")
     .trim();
 }

@@ -1570,8 +1570,8 @@ const supplementalEncounterFallbacks: Record<string, Record<number, Omit<Encount
     361: [
       {
         location: "Dalizapa Passage, Glaseado Mountain",
-        levels: "unknown",
-        methods: "Wild encounter listed in external location data.",
+        levels: "15-39",
+        methods: "Catch in the snowy cave and mountain encounter areas.",
         source: "Wild",
       },
     ],
@@ -1580,8 +1580,8 @@ const supplementalEncounterFallbacks: Record<string, Record<number, Omit<Encount
     361: [
       {
         location: "Dalizapa Passage, Glaseado Mountain",
-        levels: "unknown",
-        methods: "Wild encounter listed in external location data.",
+        levels: "15-39",
+        methods: "Catch in the snowy cave and mountain encounter areas.",
         source: "Wild",
       },
     ],
@@ -1808,8 +1808,8 @@ function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolution
     return [
       createFallbackRow({
         location: "Wild encounter",
-        levels: "unknown",
-        methods: "Native to this game, but detailed route and level data is not available from PokeAPI.",
+        levels: "varies",
+        methods: "Native wild encounter. Detailed route data is not available yet.",
         source: "Wild",
       }),
     ];
@@ -1846,7 +1846,7 @@ function getLevelText(details: PokeApiEncounter["version_details"][number]["enco
     });
 
   const uniqueRanges = [...new Set(levelRanges)];
-  return uniqueRanges.length > 0 ? uniqueRanges.join(", ") : "unknown";
+  return uniqueRanges.length > 0 ? uniqueRanges.join(", ") : "varies";
 }
 
 function summarizePokeApiEncounterRows(rows: EncounterRow[]) {
@@ -1955,7 +1955,7 @@ function describePokeApiMethod(method: string) {
     return "Receive it as a gift in this area.";
   }
 
-  return `Encounter method: ${formatLabel(method)}.`;
+  return `Use ${formatLabel(method).toLowerCase()} in this area.`;
 }
 
 function getEvolutionInfo(chain: PokeApiEvolutionChain, pokemonId: number): EvolutionInfo {
