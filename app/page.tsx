@@ -80,6 +80,7 @@ export default function Home() {
   const [detailPokemon, setDetailPokemon] = useState<PokemonEntry | null>(null);
   const [tagExplorer, setTagExplorer] = useState<TagExplorer | null>(null);
   const [tagExplorerSearch, setTagExplorerSearch] = useState("");
+  const [evolutionInfo, setEvolutionInfo] = useState<EvolutionInfo | null>(null);
   const [encounterRows, setEncounterRows] = useState<EncounterRow[]>([]);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -153,8 +154,8 @@ export default function Home() {
       return [];
     }
 
-    return encounterRows.length > 0 ? encounterRows : getFallbackEncounterRows(detailPokemon, filters.gameId);
-  }, [detailPokemon, encounterRows, filters.gameId]);
+    return encounterRows.length > 0 ? encounterRows : getFallbackEncounterRows(detailPokemon, filters.gameId, evolutionInfo);
+  }, [detailPokemon, encounterRows, evolutionInfo, filters.gameId]);
 
   useEffect(() => {
     return () => {
@@ -208,6 +209,49 @@ export default function Home() {
 
     return () => controller.abort();
   }, [detailPokemon, filters.gameId]);
+
+  useEffect(() => {
+    if (!detailPokemon) {
+      setEvolutionInfo(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setEvolutionInfo(null);
+
+    void fetch(`https://pokeapi.co/api/v2/pokemon-species/${detailPokemon.id}`, {
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Species data could not be loaded.");
+        }
+
+        return response.json() as Promise<PokeApiSpecies>;
+      })
+      .then((species) => fetch(species.evolution_chain.url, { signal: controller.signal }))
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Evolution chain could not be loaded.");
+        }
+
+        return response.json() as Promise<PokeApiEvolutionChain>;
+      })
+      .then((chain) => {
+        if (!controller.signal.aborted) {
+          setEvolutionInfo(getEvolutionInfo(chain, detailPokemon.id));
+        }
+      })
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+
+        setEvolutionInfo(null);
+      });
+
+    return () => controller.abort();
+  }, [detailPokemon]);
 
   function clearRollTimers() {
     rollRunRef.current += 1;
@@ -313,6 +357,14 @@ export default function Home() {
 
   function openPokemonDetail(entry: PokemonEntry) {
     setDetailPokemon(entry);
+  }
+
+  function openPokemonDetailById(pokemonId: number) {
+    const entry = pokemon.find((pokemonEntry) => pokemonEntry.id === pokemonId);
+
+    if (entry) {
+      openPokemonDetail(entry);
+    }
   }
 
   function openTagExplorer(tag: TagExplorer) {
@@ -903,7 +955,7 @@ export default function Home() {
                 <div className="detailSectionHeader">
                   <span id="encounter-title">
                     <MapPin size={19} />
-                    Encounter data
+                    Gathering
                   </span>
                   <small>{selectedGame?.shortName ?? "No game"}</small>
                 </div>
@@ -922,18 +974,37 @@ export default function Home() {
                         No route-level wild encounter was found in PokeAPI for this game. Showing best available fallback info.
                       </div>
                     ) : null}
-                    {detailEncounterRows.map((row) => (
-                      <article className="encounterRow" key={`${row.location}-${row.levels}-${row.methods}`}>
-                        <div>
-                          <strong>{row.location}</strong>
-                          <span>{row.methods}</span>
-                        </div>
-                        <div>
-                          <span>Lv. {row.levels}</span>
-                          <small>{row.chance === null ? row.source : `${row.chance}%`}</small>
-                        </div>
-                      </article>
-                    ))}
+                    {detailEncounterRows.map((row) => {
+                      const methodLink = row.methodLink;
+
+                      return (
+                        <article className="encounterRow" key={`${row.location}-${row.levels}-${row.methods}`}>
+                          <div>
+                            <strong>{row.location}</strong>
+                            <span>
+                              {row.methods}
+                              {methodLink ? (
+                                <>
+                                  {" "}
+                                  <button
+                                    className="inlinePokemonLink"
+                                    type="button"
+                                    onClick={() => openPokemonDetailById(methodLink.id)}
+                                  >
+                                    {methodLink.name}
+                                  </button>
+                                  {row.methodSuffix ? ` ${row.methodSuffix}` : null}
+                                </>
+                              ) : null}
+                            </span>
+                          </div>
+                          <div>
+                            <span>Lv. {row.levels}</span>
+                            <small>{row.chance === null ? row.source : `${row.chance}%`}</small>
+                          </div>
+                        </article>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="detailNotice">
@@ -942,6 +1013,44 @@ export default function Home() {
                   </div>
                 )}
               </section>
+
+              {evolutionInfo && (evolutionInfo.from || evolutionInfo.to.length > 0) ? (
+                (() => {
+                  const evolvesFrom = evolutionInfo.from;
+
+                  return (
+                    <section className="detailSection compactDetailSection" aria-label="Evolution path">
+                      <div className="detailSectionHeader">
+                        <span>Evolution path</span>
+                        <small>Line info</small>
+                      </div>
+                      <div className="evolutionList">
+                        {evolvesFrom ? (
+                          <div className="evolutionRow">
+                            <span>Evolves from</span>
+                            <button type="button" onClick={() => openPokemonDetailById(evolvesFrom.id)}>
+                              {evolvesFrom.name}
+                            </button>
+                          </div>
+                        ) : null}
+                        {evolutionInfo.to.length > 0 ? (
+                          <div className="evolutionRow">
+                            <span>Evolves into</span>
+                            <div className="evolutionTargets">
+                              {evolutionInfo.to.map((target) => (
+                                <button type="button" key={target.id} onClick={() => openPokemonDetailById(target.id)}>
+                                  {target.name}
+                                  {target.method ? <small>{target.method}</small> : null}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </section>
+                  );
+                })()
+              ) : null}
 
               <section className="detailSection compactDetailSection" aria-label="Pokemon pool notes">
                 <div className="detailFact">
@@ -1260,6 +1369,8 @@ type EncounterRow = {
   methods: string;
   chance: number | null;
   source: string;
+  methodLink?: EvolutionPokemon;
+  methodSuffix?: string;
 };
 
 type TagExplorer = {
@@ -1285,6 +1396,57 @@ type PokeApiEncounter = {
       };
     }[];
   }[];
+};
+
+type EvolutionPokemon = {
+  id: number;
+  name: string;
+  method?: string;
+};
+
+type EvolutionInfo = {
+  from: EvolutionPokemon | null;
+  to: EvolutionPokemon[];
+};
+
+type PokeApiSpecies = {
+  evolution_chain: {
+    url: string;
+  };
+};
+
+type PokeApiEvolutionChain = {
+  chain: PokeApiEvolutionNode;
+};
+
+type PokeApiEvolutionNode = {
+  species: {
+    name: string;
+    url: string;
+  };
+  evolution_details: PokeApiEvolutionDetail[];
+  evolves_to: PokeApiEvolutionNode[];
+};
+
+type PokeApiEvolutionDetail = {
+  trigger?: {
+    name: string;
+  };
+  item?: {
+    name: string;
+  } | null;
+  held_item?: {
+    name: string;
+  } | null;
+  known_move_type?: {
+    name: string;
+  } | null;
+  location?: {
+    name: string;
+  } | null;
+  min_happiness?: number | null;
+  min_level?: number | null;
+  time_of_day?: string;
 };
 
 const pokeApiVersionMap: Record<string, string> = {
@@ -1486,7 +1648,7 @@ function getEncounterRows(encounters: PokeApiEncounter[], versionId: string): En
   return rows.sort((first, second) => first.location.localeCompare(second.location));
 }
 
-function getFallbackEncounterRows(entry: PokemonEntry, gameId: string): EncounterRow[] {
+function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolutionInfo: EvolutionInfo | null): EncounterRow[] {
   const starterRow = getStarterFallback(entry.id, gameId);
 
   if (starterRow) {
@@ -1565,6 +1727,19 @@ function getFallbackEncounterRows(entry: PokemonEntry, gameId: string): Encounte
     ];
   }
 
+  if (evolutionInfo?.from) {
+    return [
+      createFallbackRow({
+        location: "Evolution",
+        levels: "varies",
+        methods: "Evolve from",
+        methodLink: evolutionInfo.from,
+        methodSuffix: evolutionInfo.from.method ? `(${evolutionInfo.from.method})` : undefined,
+        source: "Evolution",
+      }),
+    ];
+  }
+
   return [
     createFallbackRow({
       location: entry.fullyEvolved ? "Evolution source" : "Gift, egg, evolution, or special source",
@@ -1597,6 +1772,103 @@ function getLevelText(details: PokeApiEncounter["version_details"][number]["enco
 
   const uniqueRanges = [...new Set(levelRanges)];
   return uniqueRanges.length > 0 ? uniqueRanges.join(", ") : "unknown";
+}
+
+function getEvolutionInfo(chain: PokeApiEvolutionChain, pokemonId: number): EvolutionInfo {
+  const match = findEvolutionNode(chain.chain, pokemonId, null);
+
+  if (!match) {
+    return {
+      from: null,
+      to: [],
+    };
+  }
+
+  return {
+    from: match.parent ? nodeToEvolutionPokemon(match.parent, match.node.evolution_details[0]) : null,
+    to: match.node.evolves_to.map((node) => nodeToEvolutionPokemon(node, node.evolution_details[0])),
+  };
+}
+
+function findEvolutionNode(
+  node: PokeApiEvolutionNode,
+  pokemonId: number,
+  parent: PokeApiEvolutionNode | null,
+): { node: PokeApiEvolutionNode; parent: PokeApiEvolutionNode | null } | null {
+  if (getSpeciesId(node.species.url) === pokemonId) {
+    return { node, parent };
+  }
+
+  for (const child of node.evolves_to) {
+    const match = findEvolutionNode(child, pokemonId, node);
+
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+}
+
+function nodeToEvolutionPokemon(node: PokeApiEvolutionNode, detail?: PokeApiEvolutionDetail): EvolutionPokemon {
+  const id = getSpeciesId(node.species.url);
+  const localEntry = pokemon.find((entry) => entry.id === id);
+
+  return {
+    id,
+    name: localEntry?.name ?? formatSpeciesName(node.species.name),
+    method: detail ? getEvolutionMethodText(detail) : undefined,
+  };
+}
+
+function getSpeciesId(url: string) {
+  const match = url.match(/\/pokemon-species\/(\d+)\//);
+  return match ? Number(match[1]) : 0;
+}
+
+function getEvolutionMethodText(detail: PokeApiEvolutionDetail) {
+  const parts = [];
+
+  if (detail.min_level) {
+    parts.push(`level ${detail.min_level}`);
+  }
+
+  if (detail.item) {
+    parts.push(formatLabel(detail.item.name));
+  }
+
+  if (detail.held_item) {
+    parts.push(`holding ${formatLabel(detail.held_item.name)}`);
+  }
+
+  if (detail.known_move_type) {
+    parts.push(`${formatLabel(detail.known_move_type.name)} move`);
+  }
+
+  if (detail.min_happiness) {
+    parts.push(`friendship ${detail.min_happiness}+`);
+  }
+
+  if (detail.location) {
+    parts.push(formatLabel(detail.location.name));
+  }
+
+  if (detail.time_of_day) {
+    parts.push(detail.time_of_day);
+  }
+
+  if (parts.length > 0) {
+    return parts.join(", ");
+  }
+
+  return detail.trigger?.name ? formatLabel(detail.trigger.name) : "special method";
+}
+
+function formatSpeciesName(value: string) {
+  return value
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function formatLabel(value: string) {
