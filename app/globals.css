@@ -1154,6 +1154,20 @@ button {
     linear-gradient(180deg, rgba(31, 115, 139, 0.92), rgba(28, 51, 89, 0.96));
 }
 
+.specialBadges span[data-badge="mythical"] {
+  color: #ffe8ff;
+  background:
+    radial-gradient(circle at 24% 20%, rgba(255, 255, 255, 0.34), transparent 34%),
+    linear-gradient(180deg, rgba(151, 61, 142, 0.92), rgba(78, 30, 95, 0.96));
+}
+
+.specialBadges span[data-badge="ultra-beast"] {
+  color: #f1e8ff;
+  background:
+    radial-gradient(circle at 24% 20%, rgba(255, 255, 255, 0.34), transparent 34%),
+    linear-gradient(180deg, rgba(91, 73, 184, 0.92), rgba(37, 32, 95, 0.96));
+}
+
 .poolCard .specialBadges,
 .specialBadges[data-compact="true"] {
   top: 46px;
@@ -1185,6 +1199,20 @@ button {
   background:
     radial-gradient(circle at 24% 20%, rgba(255, 255, 255, 0.58), transparent 34%),
     linear-gradient(180deg, #8fe8f3, #57a6cf);
+}
+
+.appRoot[data-theme="light"] .specialBadges span[data-badge="mythical"] {
+  color: #4a154d;
+  background:
+    radial-gradient(circle at 24% 20%, rgba(255, 255, 255, 0.58), transparent 34%),
+    linear-gradient(180deg, #ffc5f1, #d176ce);
+}
+
+.appRoot[data-theme="light"] .specialBadges span[data-badge="ultra-beast"] {
+  color: #22174f;
+  background:
+    radial-gradient(circle at 24% 20%, rgba(255, 255, 255, 0.58), transparent 34%),
+    linear-gradient(180deg, #d8c9ff, #8c7de4);
 }
 
 .pokemonSprite {

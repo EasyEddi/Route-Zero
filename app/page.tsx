@@ -28,7 +28,7 @@ import {
 import { games } from "@/data/games";
 import { pokemon } from "@/data/pokemon";
 import { pokemonTypes } from "@/data/types";
-import { isLegendaryPokemon, isParadoxPokemon } from "@/lib/pokemon-tags";
+import { getSpecialPokemonLabels } from "@/lib/pokemon-tags";
 import { applyFilters, rollTeam } from "@/lib/team-generator";
 import type { PokemonEntry, TeamFilters } from "@/lib/types";
 
@@ -486,7 +486,7 @@ export default function Home() {
             />
             <ToggleRow
               icon={<Crown size={22} />}
-              label="Allow legendary-Pokemon"
+              label="Allow special-Pokemon"
               description="Legendary, mythical, and similar special Pokemon can appear when this is enabled."
               checked={filters.allowLegendaryPokemon}
               onChange={(checked) => updateFilter("allowLegendaryPokemon", checked)}
@@ -1079,15 +1079,7 @@ type SpecialBadgesProps = {
 };
 
 function SpecialBadges({ entry, compact = false }: SpecialBadgesProps) {
-  const badges = [];
-
-  if (isLegendaryPokemon(entry.id)) {
-    badges.push("Legendary");
-  }
-
-  if (isParadoxPokemon(entry.id)) {
-    badges.push("Paradox");
-  }
+  const badges = getSpecialPokemonLabels(entry.id);
 
   if (badges.length === 0) {
     return null;
@@ -1096,10 +1088,14 @@ function SpecialBadges({ entry, compact = false }: SpecialBadgesProps) {
   return (
     <div className="specialBadges" data-compact={compact}>
       {badges.map((badge) => (
-        <span data-badge={badge.toLowerCase()} key={badge}>{badge}</span>
+        <span data-badge={getBadgeKey(badge)} key={badge}>{badge}</span>
       ))}
     </div>
   );
+}
+
+function getBadgeKey(badge: string) {
+  return badge.toLowerCase().replace(/\s+/g, "-");
 }
 
 type ToggleRowProps = {
@@ -1493,24 +1489,18 @@ function getAvailabilityNotes(entry: PokemonEntry, gameId: string) {
   }
 
   if (entry.tradeOnly) {
-    notes.push("Trade flag");
+    notes.push("trade-only");
   }
 
   if (entry.eventOnly) {
-    notes.push("Event flag");
+    notes.push("event-only");
   }
 
   if (entry.roaming) {
-    notes.push("Roaming flag");
+    notes.push("roaming");
   }
 
-  if (isLegendaryPokemon(entry.id)) {
-    notes.push("Legendary");
-  }
-
-  if (isParadoxPokemon(entry.id)) {
-    notes.push("Paradox");
-  }
+  notes.push(...getSpecialPokemonLabels(entry.id));
 
   return notes;
 }
