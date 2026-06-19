@@ -1546,9 +1546,15 @@ const starterFallbacks: Record<string, Record<number, { location: string; levels
   "ultra-moon": createStarterSet([722, 725, 728], "Route 1", "5", "Starter choice during the opening story."),
   "lets-go-pikachu": {
     25: { location: "Professor Oak's Lab", levels: "5", methods: "Partner Pokemon in Pallet Town." },
+    1: { location: "Cerulean City", levels: "12", methods: "Gift Pokemon after catching enough Pokemon." },
+    4: { location: "Route 24", levels: "14", methods: "Gift Pokemon from a trainer north of Cerulean City." },
+    7: { location: "Vermilion City", levels: "16", methods: "Gift Pokemon from Officer Jenny." },
   },
   "lets-go-eevee": {
     133: { location: "Professor Oak's Lab", levels: "5", methods: "Partner Pokemon in Pallet Town." },
+    1: { location: "Cerulean City", levels: "12", methods: "Gift Pokemon after catching enough Pokemon." },
+    4: { location: "Route 24", levels: "14", methods: "Gift Pokemon from a trainer north of Cerulean City." },
+    7: { location: "Vermilion City", levels: "16", methods: "Gift Pokemon from Officer Jenny." },
   },
   sword: createStarterSet([810, 813, 816], "Postwick", "5", "Starter gift from Leon."),
   shield: createStarterSet([810, 813, 816], "Postwick", "5", "Starter gift from Leon."),
