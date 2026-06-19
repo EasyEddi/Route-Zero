@@ -91,8 +91,6 @@ const nativeFallbackGameIds = new Set([
   "brilliant-diamond",
   "shining-pearl",
   "legends-arceus",
-  "scarlet",
-  "violet",
   "legends-za",
 ]);
 
