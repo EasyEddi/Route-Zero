@@ -158,6 +158,12 @@ export async function GET(request: Request) {
 }
 
 async function getExternalEncounterRows(pokemonId: number, pokemonName: string, gameId: string) {
+  const veekunRows = await getVeekunEncounterRows(pokemonId, gameId).catch(() => []);
+
+  if (veekunRows.length > 0) {
+    return veekunRows;
+  }
+
   const serebiiRows = serebiiGameConfigs[gameId]
     ? await getSerebiiEncounterRows(pokemonId, pokemonName, gameId).catch(() => [])
     : [];
@@ -166,27 +172,22 @@ async function getExternalEncounterRows(pokemonId: number, pokemonName: string, 
     return serebiiRows;
   }
 
-  const veekunRows = await getVeekunEncounterRows(pokemonId, gameId).catch(() => []);
-
-  if (veekunRows.length > 0) {
-    return veekunRows;
-  }
-
   return getPokemonDbEncounterRows(pokemonName, gameId).catch(() => []);
 }
 
 async function getSerebiiEncounterRows(pokemonId: number, pokemonName: string, gameId: string): Promise<ExternalEncounterRow[]> {
   const config = serebiiGameConfigs[gameId];
-  const dexHtml = await fetchText(`https://www.serebii.net/${config.dexPath}/${pokemonId}.shtml`);
+  const serebiiPokemonId = getSerebiiPokemonId(pokemonId);
+  const dexHtml = await fetchText(`https://www.serebii.net/${config.dexPath}/${serebiiPokemonId}.shtml`);
   const locations = getSerebiiLocationLinks(dexHtml, config.classes);
 
   if (locations.length === 0) {
-    return getSerebiiDetailedLocationRows(config, pokemonId);
+    return getSerebiiDetailedLocationRows(config, serebiiPokemonId);
   }
 
   const rows = await Promise.all(
     locations.map(async (location) => {
-      const details = await getSerebiiLocationDetails(location.href, pokemonId, pokemonName, config);
+      const details = await getSerebiiLocationDetails(location.href, pokemonId, pokemonName, config).catch(() => []);
 
       if (details.length === 0) {
         return null;
@@ -208,7 +209,7 @@ async function getSerebiiEncounterRows(pokemonId: number, pokemonName: string, g
     return parsedRows;
   }
 
-  return getSerebiiDetailedLocationRows(config, pokemonId);
+  return getSerebiiDetailedLocationRows(config, serebiiPokemonId);
 }
 
 async function getVeekunEncounterRows(pokemonId: number, gameId: string): Promise<ExternalEncounterRow[]> {
@@ -392,25 +393,31 @@ function getPokemonDbLocationsSection(html: string) {
 function getPokemonDbLocations(cellHtml: string) {
   const text = normalizeCellText(cellHtml).toLowerCase();
 
-  if (
-    !text ||
-    text.includes("trade/migrate") ||
-    text.includes("not available") ||
-    text.includes("location data not yet available")
-  ) {
+  if (!text || isPokemonDbUnavailableOrSpecialSource(text)) {
     return [];
   }
 
   const linkedLocations = [...cellHtml.matchAll(/<a [^>]*href="\/location\/[^"]+"[^>]*>([\s\S]*?)<\/a>/gi)]
     .map((match) => normalizeCellText(match[1]))
-    .filter(Boolean);
+    .filter((location) => location && !isPokemonDbUnavailableOrSpecialSource(location.toLowerCase()));
 
   if (linkedLocations.length > 0) {
     return linkedLocations;
   }
 
   const plainLocation = normalizeCellText(cellHtml);
-  return plainLocation ? [plainLocation] : [];
+  return plainLocation && !isPokemonDbUnavailableOrSpecialSource(plainLocation.toLowerCase()) ? [plainLocation] : [];
+}
+
+function isPokemonDbUnavailableOrSpecialSource(text: string) {
+  return (
+    text.includes("trade/migrate") ||
+    text.includes("not available") ||
+    text.includes("location data not yet available") ||
+    /^(breed|evolve|trade|transfer|migrate|event|global link|pok[eé] transporter)\b/i.test(text) ||
+    /\b(breed|evolve|trade|transfer|migrate|event-only|pok[eé] transporter)\b/i.test(text) ||
+    /\b(battle tower|battle frontier|battle maison|battle resort|trainer hill|pokemon dream world)\b/i.test(text)
+  );
 }
 
 function getPokemonDbSlug(pokemonName: string) {
@@ -424,11 +431,16 @@ function getPokemonDbSlug(pokemonName: string) {
 }
 
 function getSerebiiLocationLinks(html: string, gameClasses: string[]) {
-  const rowMatches = gameClasses.flatMap((gameClass) => [
-    ...html.matchAll(
-      new RegExp(`<td class="${gameClass}"[^>]*>[\\s\\S]*?<\\/td>\\s*<td class="fooinfo"[^>]*>([\\s\\S]*?)<\\/td>`, "gi"),
-    ),
-  ]);
+  const locationSection = getSerebiiSpeciesLocationSection(html);
+  const rowMatches = [...locationSection.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)]
+    .filter((match) =>
+      gameClasses.some((gameClass) => new RegExp(`class="[^"]*\\b${escapeRegExp(gameClass)}\\b`, "i").test(match[1])),
+    )
+    .map((match) => {
+      const infoMatch = match[1].match(/<td[^>]*class="[^"]*\bfooinfo\b[^"]*"[^>]*>([\s\S]*?)<\/td>/i);
+      return infoMatch ? [infoMatch[0], infoMatch[1]] : null;
+    })
+    .filter((match): match is string[] => Boolean(match));
 
   const links = rowMatches.flatMap((rowMatch) =>
     [...rowMatch[1].matchAll(/<a href="(\/pokearth\/[^"]+)">([\s\S]*?)<\/a>/g)].map((match) => ({
@@ -440,6 +452,17 @@ function getSerebiiLocationLinks(html: string, gameClasses: string[]) {
   return links.filter((link, index, all) => all.findIndex((item) => item.href === link.href) === index);
 }
 
+function getSerebiiSpeciesLocationSection(html: string) {
+  const locationIndex = html.search(/<a name="location"/i);
+
+  if (locationIndex === -1) {
+    return html;
+  }
+
+  const tableEndIndex = html.indexOf("</table>", locationIndex);
+  return tableEndIndex === -1 ? html.slice(locationIndex) : html.slice(locationIndex, tableEndIndex + "</table>".length);
+}
+
 async function getSerebiiLocationDetails(
   locationUrl: string,
   pokemonId: number,
@@ -447,10 +470,16 @@ async function getSerebiiLocationDetails(
   config: SerebiiGameConfig,
 ) {
   const locationHtml = await fetchText(locationUrl);
+  const directDetails = getPokemonEncounterDetailsFromTables(locationHtml, pokemonName, config.locationTableClasses);
+
+  if (directDetails.length > 0) {
+    return summarizeEncounterDetails(directDetails);
+  }
+
   const tableIds = getPokemonTableIds(locationHtml, pokemonId);
 
   if (tableIds.length === 0) {
-    return getPokemonEncounterDetailsFromTables(locationHtml, pokemonName, config.locationTableClasses);
+    return [];
   }
 
   const locationBase = locationUrl.replace(/\/[^/]+$/, "");
@@ -461,6 +490,10 @@ async function getSerebiiLocationDetails(
     }),
   );
   const flattenedDetails = details.flat();
+  return summarizeEncounterDetails(flattenedDetails);
+}
+
+function summarizeEncounterDetails(flattenedDetails: EncounterDetail[]) {
   const parsedLevels = flattenedDetails.flatMap((detail) => parseLevelRange(detail.levels));
 
   if (parsedLevels.length === 0) {
@@ -514,7 +547,7 @@ function getPokemonEncounterDetailsFromTables(html: string, pokemonName: string,
     const levels = [...group.matchAll(/<b>Level<\/b><br\s*\/?>\s*([^<]+?)\s*<\/td>/g)].map((match) =>
       decodeHtml(match[1]).replace(/\s+/g, " ").trim(),
     );
-    const directLevels = [...group.matchAll(/class="level"[^>]*>\s*([^<]+?)\s*<\/td>/g)].map((match) =>
+    const directLevels = [...group.matchAll(/class="level"[^>]*>\s*([\s\S]*?)\s*<\/td>/g)].map((match) =>
       decodeHtml(match[1]).replace(/\s+/g, " ").trim(),
     );
     const rates = [...group.matchAll(/class="rate"[^>]*>\s*([^<]+?)\s*<\/td>/g)].map((match) => parseChance(match[1]));
@@ -536,7 +569,7 @@ function getPokemonEncounterDetailsFromTables(html: string, pokemonName: string,
   return [];
 }
 
-async function getSerebiiDetailedLocationRows(config: SerebiiGameConfig, pokemonId: number): Promise<ExternalEncounterRow[]> {
+async function getSerebiiDetailedLocationRows(config: SerebiiGameConfig, pokemonId: string): Promise<ExternalEncounterRow[]> {
   if (!config.detailAnchor) {
     return [];
   }
@@ -555,6 +588,10 @@ async function getSerebiiDetailedLocationRows(config: SerebiiGameConfig, pokemon
     .filter((row) => row.levels);
 
   return summarizeEncounterRows(rows);
+}
+
+function getSerebiiPokemonId(pokemonId: number) {
+  return String(pokemonId).padStart(3, "0");
 }
 
 function getDetailedRowsFromLocationSection(section: string): ExternalEncounterRow[] {
@@ -929,6 +966,7 @@ function normalizePokemonName(name: string) {
 
 function decodeHtml(value: string) {
   return value
+    .replace(/<br\s*\/?>/gi, " / ")
     .replace(/&eacute;/g, "e")
     .replace(/&amp;/g, "&")
     .replace(/&#39;/g, "'")
