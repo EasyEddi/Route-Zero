@@ -2467,6 +2467,13 @@ button {
 }
 
 @media (max-width: 620px) {
+  .themeToggle {
+    top: 14px;
+    left: 12px;
+    width: 38px;
+    height: 38px;
+  }
+
   .shell {
     width: 100%;
     min-height: 100vh;
@@ -2475,61 +2482,365 @@ button {
   }
 
   .topbar {
-    height: 72px;
+    height: 64px;
+    padding: 0 16px 0 58px;
+  }
+
+  .brand {
+    gap: 10px;
+    font-size: 1.2rem;
+  }
+
+  .brandMark {
+    width: 34px;
+    height: 34px;
+    border-width: 4px;
+  }
+
+  .brandMark::before {
+    height: 5px;
+  }
+
+  .brandMark::after {
+    width: 10px;
+    height: 10px;
   }
 
   .heroGrid {
-    padding: 12px;
+    gap: 14px;
+    padding: 10px;
   }
 
   .intro {
-    min-height: 340px;
-    padding-inline: 18px;
+    min-height: 286px;
+    padding: 22px 16px 20px;
+  }
+
+  .pokeballGlow {
+    width: 96px;
+    height: 96px;
+  }
+
+  .pokeballGlow::before {
+    height: 13px;
+  }
+
+  .pokeballGlow::after {
+    width: 26px;
+    height: 26px;
+  }
+
+  .intro h1,
+  .teamHeader h2 {
+    font-size: 2rem;
+  }
+
+  .intro p,
+  .teamHeader span {
+    margin: 9px 0 18px;
+    font-size: 1rem;
+    line-height: 1.38;
   }
 
   .primaryButton {
     width: 100%;
     min-width: 0;
+    min-height: 54px;
+  }
+
+  .settingsPanel {
+    margin-top: 14px;
+    padding: 14px 10px 12px;
+  }
+
+  .panelHeader {
+    margin: 0 4px 10px;
   }
 
   .settingRow,
-  .toggleRow {
+  .toggleRow,
+  .typeBlock {
+    gap: 10px;
+    margin-top: 8px;
+    padding: 12px;
+  }
+
+  .settingRow {
     grid-template-columns: 24px minmax(0, 1fr);
   }
 
-  .stepper,
-  .settingValue,
-  .switchControl {
+  .toggleRow {
+    grid-template-columns: 24px minmax(0, 1fr) 48px;
+  }
+
+  .settingValue {
     grid-column: 2;
+    max-width: 100%;
     justify-self: start;
+    text-align: left;
+  }
+
+  .switchControl {
+    grid-column: 3;
+    justify-self: end;
+  }
+
+  .typeGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .typeChip {
+    min-height: 38px;
+    padding: 7px 9px;
+  }
+
+  .settingsFooterActions {
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  .settingsActionButton {
+    min-height: 46px;
+    padding: 0 8px;
+    font-size: 0.9rem;
+  }
+
+  .teamPanel {
+    padding: 8px 2px 0;
+  }
+
+  .lockedBuilder {
+    margin-top: 14px;
+    padding: 12px;
+  }
+
+  .lockedSearch {
+    min-height: 46px;
+  }
+
+  .lockedSuggestions {
+    max-height: 240px;
+  }
+
+  .lockedPicks {
+    gap: 7px;
+  }
+
+  .lockedPick {
+    font-size: 0.82rem;
+  }
+
+  .teamTools {
+    min-height: 50px;
+    margin: 12px 0 12px;
+  }
+
+  .teamShinyButton {
+    width: 50px;
+    height: 50px;
   }
 
   .teamGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .poolGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .detailHero {
-    grid-template-columns: 1fr;
-  }
-
-  .detailArtwork {
-    min-height: 230px;
-  }
-
-  .gameGrid,
-  .sizeGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 0 12px 14px;
   }
 
   .pokemonCard {
-    min-height: 300px;
+    min-height: 244px;
+    padding: 13px 9px 14px;
+  }
+
+  .dexNumber {
+    top: 12px;
+    left: 12px;
+    font-size: 1rem;
+  }
+
+  .shinyToggle {
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .specialBadges {
+    top: 40px;
+    left: 10px;
+    max-width: calc(100% - 52px);
+    gap: 4px;
+  }
+
+  .specialBadges span {
+    min-height: 20px;
+    padding: 0 6px;
+    font-size: 0.58rem;
+  }
+
+  .pokemonSprite {
+    width: min(150px, 86%);
+    height: 122px;
+    margin-top: 26px;
+  }
+
+  .pokemonCard h3 {
+    margin: 8px 0 10px;
+    font-size: 1.08rem;
+  }
+
+  .rollingCard h3 {
+    font-size: 0.92rem;
+  }
+
+  .typeList {
+    gap: 5px;
+  }
+
+  .typeBadge {
+    padding: 6px 8px;
+    font-size: 0.72rem;
   }
 
   .actionBar {
     flex-direction: column;
+    margin-top: 16px;
+  }
+
+  .modalOverlay {
+    align-items: stretch;
+    padding: 8px;
+  }
+
+  .poolModal {
+    width: 100%;
+    max-height: calc(100dvh - 16px);
+    border-radius: 12px;
+  }
+
+  .poolModalHeader {
+    gap: 10px;
+    padding: 14px 12px 12px;
+  }
+
+  .poolModalHeader h2 {
+    font-size: 1.75rem;
+  }
+
+  .poolHeaderActions {
+    gap: 8px;
+  }
+
+  .poolShinyButton,
+  .modalCloseButton {
+    width: 40px;
+    height: 40px;
+  }
+
+  .poolSearch {
+    margin: 12px;
+    padding: 11px 12px;
+  }
+
+  .poolCard {
+    min-height: 230px;
+    padding: 12px 8px 10px;
+  }
+
+  .poolCard img {
+    width: min(112px, 84%);
+    height: 94px;
+  }
+
+  .poolCard h3 {
+    font-size: 0.96rem;
+  }
+
+  .compactBadge {
+    padding: 5px 8px;
+    font-size: 0.68rem;
+  }
+
+  .detailHero {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .pokemonDetailBody {
+    padding: 14px 12px 16px;
+  }
+
+  .detailArtwork {
+    min-height: 190px;
+  }
+
+  .detailArtwork img {
+    height: 170px;
+  }
+
+  .detailSummary h3 {
+    font-size: 2.05rem;
+  }
+
+  .detailSection {
+    padding: 13px;
+  }
+
+  .detailSectionHeader {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .encounterRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .encounterRow > div:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+  }
+
+  .gameGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 0 12px 14px;
+  }
+
+  .gameCard {
+    grid-template-rows: 156px minmax(2.6em, auto);
+    min-height: 220px;
+    padding: 9px;
+  }
+
+  .gameCover {
+    min-height: 156px;
+  }
+
+  .gameCover img {
+    max-height: 142px;
+  }
+
+  .gameName {
+    font-size: 0.86rem;
+  }
+
+  .sizeGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .sizeCard {
+    min-height: 92px;
+    font-size: 2rem;
   }
 }
