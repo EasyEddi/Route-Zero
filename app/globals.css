@@ -1158,6 +1158,8 @@ button {
   top: 46px;
   left: 14px;
   max-width: calc(100% - 62px);
+  flex-direction: column;
+  align-items: flex-start;
   gap: 5px;
 }
 
