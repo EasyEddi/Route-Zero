@@ -1155,7 +1155,7 @@ button {
 
 .poolCard .specialBadges,
 .specialBadges[data-compact="true"] {
-  top: 44px;
+  top: 46px;
   left: 14px;
   max-width: calc(100% - 62px);
   gap: 5px;
@@ -1827,11 +1827,11 @@ button {
 .poolCard {
   position: relative;
   display: grid;
-  grid-template-rows: 126px auto minmax(32px, auto);
+  grid-template-rows: 150px auto minmax(32px, auto);
   justify-items: center;
   align-items: start;
-  min-height: 250px;
-  padding: 18px 12px 18px;
+  min-height: 286px;
+  padding: 18px 12px 20px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -1874,7 +1874,7 @@ button {
 .poolCard img {
   width: min(132px, 82%);
   height: 112px;
-  margin-top: 12px;
+  margin-top: 36px;
   object-fit: contain;
   filter: drop-shadow(0 16px 16px rgba(0, 0, 0, 0.34));
 }
