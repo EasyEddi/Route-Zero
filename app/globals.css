@@ -943,11 +943,17 @@ button {
   width: 24px;
   height: 24px;
   place-items: center;
+  padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
   color: var(--muted);
   background: rgba(3, 8, 16, 0.32);
   cursor: pointer;
+  line-height: 0;
+}
+
+.lockedPick button svg {
+  display: block;
 }
 
 .appRoot[data-theme="light"] .lockedPick button {
@@ -1180,6 +1186,18 @@ button {
   background:
     radial-gradient(circle at 50% 32%, rgba(143, 87, 255, 0.2), transparent 11rem),
     linear-gradient(180deg, rgba(248, 251, 255, 0.92), rgba(232, 239, 251, 0.96));
+}
+
+.lockedRollingCard {
+  background:
+    radial-gradient(circle at 50% 32%, rgba(95, 119, 190, 0.2), transparent 11rem),
+    linear-gradient(180deg, rgba(18, 31, 51, 0.86), rgba(10, 18, 31, 0.9));
+}
+
+.appRoot[data-theme="light"] .lockedRollingCard {
+  background:
+    radial-gradient(circle at 50% 32%, rgba(126, 150, 231, 0.2), transparent 11rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(239, 245, 255, 0.9));
 }
 
 .rollingCard::before {

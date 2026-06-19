@@ -90,11 +90,13 @@ export default function Home() {
   const [lockedPokemonIds, setLockedPokemonIds] = useState<number[]>([]);
   const [lockedSearch, setLockedSearch] = useState("");
   const [lockedMessage, setLockedMessage] = useState<string | null>(null);
+  const [recentlyLockedIndex, setRecentlyLockedIndex] = useState<number | null>(null);
   const [rollingSlots, setRollingSlots] = useState<PokemonEntry[]>([]);
   const [shinyCards, setShinyCards] = useState<Record<string, boolean>>({});
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const rollIntervalRef = useRef<number | null>(null);
   const rollTimeoutsRef = useRef<number[]>([]);
+  const lockedRevealTimeoutRef = useRef<number | null>(null);
   const rollRunRef = useRef(0);
 
   const selectedGame = games.find((game) => game.id === filters.gameId);
@@ -325,6 +327,13 @@ export default function Home() {
     rollTimeoutsRef.current = [];
   }
 
+  function clearLockedRevealTimer() {
+    if (lockedRevealTimeoutRef.current !== null) {
+      window.clearTimeout(lockedRevealTimeoutRef.current);
+      lockedRevealTimeoutRef.current = null;
+    }
+  }
+
   function clearRolledTeam() {
     clearRollTimers();
     setTeamIds([]);
@@ -485,13 +494,23 @@ export default function Home() {
       return;
     }
 
-    setLockedPokemonIds((current) => [...current, entry.id]);
+    clearLockedRevealTimer();
+    setLockedPokemonIds((current) => {
+      setRecentlyLockedIndex(current.length);
+      return [...current, entry.id];
+    });
     setLockedSearch("");
     setLockedMessage(null);
     clearRolledTeam();
+    lockedRevealTimeoutRef.current = window.setTimeout(() => {
+      setRecentlyLockedIndex(null);
+      lockedRevealTimeoutRef.current = null;
+    }, 780);
   }
 
   function removeLockedPokemon(index: number) {
+    clearLockedRevealTimer();
+    setRecentlyLockedIndex(null);
     setLockedPokemonIds((current) => current.filter((_, currentIndex) => currentIndex !== index));
     setLockedMessage(null);
     clearRolledTeam();
@@ -545,9 +564,11 @@ export default function Home() {
 
   function selectGame(gameId: string) {
     updateFilter("gameId", gameId);
+    clearLockedRevealTimer();
     setLockedPokemonIds([]);
     setLockedSearch("");
     setLockedMessage(null);
+    setRecentlyLockedIndex(null);
     clearRolledTeam();
     setError(null);
     setGameSearch("");
@@ -556,8 +577,10 @@ export default function Home() {
 
   function selectTeamSize(teamSize: number) {
     updateFilter("teamSize", teamSize);
+    clearLockedRevealTimer();
     setLockedPokemonIds((current) => current.slice(0, teamSize));
     setLockedMessage(null);
+    setRecentlyLockedIndex(null);
     clearRolledTeam();
     setError(null);
     setIsTeamSizeOpen(false);
@@ -631,9 +654,11 @@ export default function Home() {
 
   function resetFilters() {
     setFilters(defaultFilters);
+    clearLockedRevealTimer();
     setLockedPokemonIds([]);
     setLockedSearch("");
     setLockedMessage(null);
+    setRecentlyLockedIndex(null);
     setError(null);
     clearRolledTeam();
   }
@@ -887,12 +912,17 @@ export default function Home() {
                 const displayEntry = lockedPreviewEntry ?? (revealedEntry !== undefined && index < revealedCount ? revealedEntry : undefined);
                 const isSlotRevealed = displayEntry !== undefined;
                 const detailEntry = displayEntry;
+                const isLockedDuringRoll = lockedPreviewEntry !== undefined;
                 const cardKey = `team-${index}`;
                 const isShiny = Boolean(shinyCards[cardKey]);
 
                 return (
                   <article
-                    className={`pokemonCard rollingCard ${isSlotRevealed ? "revealedCard revealSequenceCard" : ""}`}
+                    className={
+                      isLockedDuringRoll
+                        ? "pokemonCard lockedRollingCard"
+                        : `pokemonCard rollingCard ${isSlotRevealed ? "revealedCard revealSequenceCard" : ""}`
+                    }
                     data-shiny={isSlotRevealed ? isShiny : undefined}
                     key={index}
                     role={detailEntry ? "button" : undefined}
@@ -963,7 +993,7 @@ export default function Home() {
 
                     return (
                   <article
-                    className={`pokemonCard ${isRevealing ? "revealedCard" : ""}`}
+                    className={`pokemonCard ${recentlyLockedIndex === index ? "revealedCard revealSequenceCard lockedRevealCard" : ""}`}
                     data-shiny={isShiny}
                     key={`${entry.id}-${index}`}
                     role="button"
