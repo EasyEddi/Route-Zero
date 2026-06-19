@@ -1543,6 +1543,10 @@ const starterFallbacks: Record<string, Record<number, { location: string; levels
 
 const fossilPokemonIds = new Set([138, 140, 142, 345, 347, 408, 410, 564, 566, 696, 698, 880, 881, 882, 883]);
 
+const babyPokemonIds = new Set([
+  172, 173, 174, 175, 236, 238, 239, 240, 298, 360, 406, 433, 438, 439, 440, 446, 447, 458, 848,
+]);
+
 const staticPokemonIds = new Set([
   144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386,
   480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 638, 639, 640, 641, 642, 643,
@@ -1675,9 +1679,9 @@ function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolution
   if (entry.tradeOnly) {
     return [
       createFallbackRow({
-        location: "Trade evolution or trade source",
+        location: "Trade",
         levels: "varies",
-        methods: "Usually obtained through trading, trade evolution, or another linked game.",
+        methods: "Obtain through a trade requirement for this game.",
         source: "Trade",
       }),
     ];
@@ -1686,9 +1690,9 @@ function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolution
   if (!entry.nativeGames.includes(gameId) && entry.games.includes(gameId)) {
     return [
       createFallbackRow({
-        location: "External game source",
+        location: "Transfer",
         levels: "varies",
-        methods: "Not native to this game. Obtain through trade, transfer, migration, or compatibility features.",
+        methods: "Not native to this game. Bring it in through transfer compatibility.",
         source: "Transfer",
       }),
     ];
@@ -1719,9 +1723,9 @@ function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolution
   if (staticPokemonIds.has(entry.id)) {
     return [
       createFallbackRow({
-        location: "Static or story encounter",
+        location: "Static encounter",
         levels: "varies",
-        methods: "Usually a one-time overworld, legendary, story, or special encounter.",
+        methods: "One-time overworld encounter for this game.",
         source: "Static",
       }),
     ];
@@ -1740,13 +1744,35 @@ function getFallbackEncounterRows(entry: PokemonEntry, gameId: string, evolution
     ];
   }
 
+  if (babyPokemonIds.has(entry.id)) {
+    return [
+      createFallbackRow({
+        location: "Egg",
+        levels: "varies",
+        methods: "Obtain by hatching an egg from its evolution line.",
+        source: "Egg",
+      }),
+    ];
+  }
+
+  if (entry.nativeGames.includes(gameId)) {
+    return [
+      createFallbackRow({
+        location: "Wild encounter",
+        levels: "varies",
+        methods: "Native to this game, but detailed route data is not available from PokeAPI.",
+        source: "Wild",
+      }),
+    ];
+  }
+
   return [
     createFallbackRow({
-      location: entry.fullyEvolved ? "Evolution source" : "Gift, egg, evolution, or special source",
+      location: entry.fullyEvolved ? "Evolution" : "Special encounter",
       levels: "varies",
       methods: entry.fullyEvolved
         ? "Usually obtained by evolving an earlier Pokemon in the same evolutionary line."
-        : "No route-level wild encounter was found. This can happen for gifts, eggs, baby Pokemon, evolution-only Pokemon, or special cases.",
+        : "Detailed source data is not available for this game.",
       source: entry.fullyEvolved ? "Evolution" : "Special",
     }),
   ];
