@@ -116,6 +116,13 @@ export default function Home() {
 
     return games.filter((game) => game.name.toLowerCase().includes(query) || game.shortName.toLowerCase().includes(query));
   }, [gameSearch]);
+  const detailEncounterRows = useMemo(() => {
+    if (!detailPokemon || !filters.gameId) {
+      return [];
+    }
+
+    return encounterRows.length > 0 ? encounterRows : getFallbackEncounterRows(detailPokemon, filters.gameId);
+  }, [detailPokemon, encounterRows, filters.gameId]);
 
   useEffect(() => {
     return () => {
@@ -838,11 +845,17 @@ export default function Home() {
                   <div className="detailNotice">Select a game first to load route and level data.</div>
                 ) : isDetailLoading ? (
                   <div className="detailNotice">Loading encounters...</div>
-                ) : detailError ? (
+                ) : detailError && detailEncounterRows.length === 0 ? (
                   <div className="detailNotice">{detailError}</div>
-                ) : encounterRows.length > 0 ? (
+                ) : detailEncounterRows.length > 0 ? (
                   <div className="encounterList">
-                    {encounterRows.map((row) => (
+                    {detailError ? <div className="detailNotice compactNotice">{detailError} Showing fallback info.</div> : null}
+                    {encounterRows.length === 0 ? (
+                      <div className="detailNotice compactNotice">
+                        No route-level wild encounter was found in PokeAPI for this game. Showing best available fallback info.
+                      </div>
+                    ) : null}
+                    {detailEncounterRows.map((row) => (
                       <article className="encounterRow" key={`${row.location}-${row.levels}-${row.methods}`}>
                         <div>
                           <strong>{row.location}</strong>
@@ -850,7 +863,7 @@ export default function Home() {
                         </div>
                         <div>
                           <span>Lv. {row.levels}</span>
-                          <small>{row.chance}%</small>
+                          <small>{row.chance === null ? row.source : `${row.chance}%`}</small>
                         </div>
                       </article>
                     ))}
@@ -1068,7 +1081,8 @@ type EncounterRow = {
   location: string;
   levels: string;
   methods: string;
-  chance: number;
+  chance: number | null;
+  source: string;
 };
 
 type PokeApiEncounter = {
@@ -1109,33 +1123,282 @@ const pokeApiVersionMap: Record<string, string> = {
   "legends-za": "legends-za",
 };
 
+const starterFallbacks: Record<string, Record<number, { location: string; levels: string; methods: string }>> = {
+  red: {
+    1: { location: "Professor Oak's Lab", levels: "5", methods: "Starter choice in Pallet Town." },
+    4: { location: "Professor Oak's Lab", levels: "5", methods: "Starter choice in Pallet Town." },
+    7: { location: "Professor Oak's Lab", levels: "5", methods: "Starter choice in Pallet Town." },
+  },
+  blue: {
+    1: { location: "Professor Oak's Lab", levels: "5", methods: "Starter choice in Pallet Town." },
+    4: { location: "Professor Oak's Lab", levels: "5", methods: "Starter choice in Pallet Town." },
+    7: { location: "Professor Oak's Lab", levels: "5", methods: "Starter choice in Pallet Town." },
+  },
+  yellow: {
+    25: { location: "Professor Oak's Lab", levels: "5", methods: "Starter Pokemon in Pallet Town." },
+    1: { location: "Cerulean City", levels: "10", methods: "Gift Pokemon after meeting friendship/story requirements." },
+    4: { location: "Route 24", levels: "10", methods: "Gift Pokemon from a trainer on Route 24." },
+    7: { location: "Vermilion City", levels: "10", methods: "Gift Pokemon from Officer Jenny." },
+  },
+  gold: createStarterSet([152, 155, 158], "Professor Elm's Lab", "5", "Starter choice in New Bark Town."),
+  silver: createStarterSet([152, 155, 158], "Professor Elm's Lab", "5", "Starter choice in New Bark Town."),
+  crystal: createStarterSet([152, 155, 158], "Professor Elm's Lab", "5", "Starter choice in New Bark Town."),
+  ruby: createStarterSet([252, 255, 258], "Route 101", "5", "Starter choice after helping Professor Birch."),
+  sapphire: createStarterSet([252, 255, 258], "Route 101", "5", "Starter choice after helping Professor Birch."),
+  emerald: createStarterSet([252, 255, 258], "Route 101", "5", "Starter choice after helping Professor Birch."),
+  "fire-red": createStarterSet([1, 4, 7], "Professor Oak's Lab", "5", "Starter choice in Pallet Town."),
+  "leaf-green": createStarterSet([1, 4, 7], "Professor Oak's Lab", "5", "Starter choice in Pallet Town."),
+  diamond: createStarterSet([387, 390, 393], "Lake Verity", "5", "Starter choice during the Lake Verity event."),
+  pearl: createStarterSet([387, 390, 393], "Lake Verity", "5", "Starter choice during the Lake Verity event."),
+  platinum: createStarterSet([387, 390, 393], "Route 201", "5", "Starter choice from Professor Rowan."),
+  "heart-gold": {
+    ...createStarterSet([152, 155, 158], "Professor Elm's Lab", "5", "Starter choice in New Bark Town."),
+    ...createStarterSet([1, 4, 7], "Professor Oak's Lab", "5", "Kanto starter gift after the late-game requirement."),
+  },
+  "soul-silver": {
+    ...createStarterSet([152, 155, 158], "Professor Elm's Lab", "5", "Starter choice in New Bark Town."),
+    ...createStarterSet([1, 4, 7], "Professor Oak's Lab", "5", "Kanto starter gift after the late-game requirement."),
+  },
+  black: createStarterSet([495, 498, 501], "Nuvema Town", "5", "Starter gift from Professor Juniper."),
+  white: createStarterSet([495, 498, 501], "Nuvema Town", "5", "Starter gift from Professor Juniper."),
+  "black-2": createStarterSet([495, 498, 501], "Aspertia City", "5", "Starter gift from Bianca."),
+  "white-2": createStarterSet([495, 498, 501], "Aspertia City", "5", "Starter gift from Bianca."),
+  x: {
+    ...createStarterSet([650, 653, 656], "Aquacorde Town", "5", "Starter choice from your friends."),
+    ...createStarterSet([1, 4, 7], "Lumiose City", "10", "Kanto starter gift from Professor Sycamore."),
+  },
+  y: {
+    ...createStarterSet([650, 653, 656], "Aquacorde Town", "5", "Starter choice from your friends."),
+    ...createStarterSet([1, 4, 7], "Lumiose City", "10", "Kanto starter gift from Professor Sycamore."),
+  },
+  "omega-ruby": createStarterSet([252, 255, 258], "Route 101", "5", "Starter choice after helping Professor Birch."),
+  "alpha-sapphire": createStarterSet([252, 255, 258], "Route 101", "5", "Starter choice after helping Professor Birch."),
+  sun: createStarterSet([722, 725, 728], "Iki Town", "5", "Starter choice in Melemele Island's opening story."),
+  moon: createStarterSet([722, 725, 728], "Iki Town", "5", "Starter choice in Melemele Island's opening story."),
+  "ultra-sun": createStarterSet([722, 725, 728], "Route 1", "5", "Starter choice during the opening story."),
+  "ultra-moon": createStarterSet([722, 725, 728], "Route 1", "5", "Starter choice during the opening story."),
+  "lets-go-pikachu": {
+    25: { location: "Professor Oak's Lab", levels: "5", methods: "Partner Pokemon in Pallet Town." },
+  },
+  "lets-go-eevee": {
+    133: { location: "Professor Oak's Lab", levels: "5", methods: "Partner Pokemon in Pallet Town." },
+  },
+  sword: createStarterSet([810, 813, 816], "Postwick", "5", "Starter gift from Leon."),
+  shield: createStarterSet([810, 813, 816], "Postwick", "5", "Starter gift from Leon."),
+  "brilliant-diamond": createStarterSet([387, 390, 393], "Lake Verity", "5", "Starter choice during the Lake Verity event."),
+  "shining-pearl": createStarterSet([387, 390, 393], "Lake Verity", "5", "Starter choice during the Lake Verity event."),
+  "legends-arceus": {
+    722: { location: "Galaxy Team Headquarters", levels: "5", methods: "Starter gift from Professor Laventon." },
+    155: { location: "Galaxy Team Headquarters", levels: "5", methods: "Starter gift from Professor Laventon." },
+    501: { location: "Galaxy Team Headquarters", levels: "5", methods: "Starter gift from Professor Laventon." },
+  },
+  scarlet: createStarterSet([906, 909, 912], "Cabo Poco", "5", "Starter gift from Director Clavell."),
+  violet: createStarterSet([906, 909, 912], "Cabo Poco", "5", "Starter gift from Director Clavell."),
+};
+
+const fossilPokemonIds = new Set([138, 140, 142, 345, 347, 408, 410, 564, 566, 696, 698, 880, 881, 882, 883]);
+
+const staticPokemonIds = new Set([
+  144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386,
+  480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 638, 639, 640, 641, 642, 643,
+  644, 645, 646, 647, 648, 649, 716, 717, 718, 719, 720, 721, 772, 773, 785, 786, 787, 788, 789, 790, 791,
+  792, 800, 801, 802, 807, 808, 809, 888, 889, 890, 891, 892, 893, 894, 895, 896, 897, 898, 905, 1001, 1002,
+  1003, 1004, 1007, 1008, 1009, 1010, 1014, 1015, 1016, 1017, 1024,
+]);
+
+function createStarterSet(ids: number[], location: string, levels: string, methods: string) {
+  return Object.fromEntries(ids.map((id) => [id, { location, levels, methods }]));
+}
+
 function getPokeApiVersionId(gameId: string) {
   return pokeApiVersionMap[gameId] ?? gameId;
 }
 
+function getStarterFallback(pokemonId: number, gameId: string) {
+  const fallback = starterFallbacks[gameId]?.[pokemonId];
+
+  if (!fallback) {
+    return null;
+  }
+
+  return createFallbackRow({
+    ...fallback,
+    source: fallback.methods.includes("Starter") || fallback.methods.includes("Partner") ? "Starter" : "Gift",
+  });
+}
+
+function getFossilFallback(pokemonId: number, gameId: string) {
+  if (!fossilPokemonIds.has(pokemonId)) {
+    return null;
+  }
+
+  const restorationLocation = getFossilRestorationLocation(gameId);
+
+  return createFallbackRow({
+    location: restorationLocation,
+    levels: "varies",
+    methods: "Revive from a fossil item. Fossil availability depends on version and side content.",
+    source: "Fossil",
+  });
+}
+
+function getFossilRestorationLocation(gameId: string) {
+  const locations: Record<string, string> = {
+    red: "Cinnabar Lab",
+    blue: "Cinnabar Lab",
+    yellow: "Cinnabar Lab",
+    "fire-red": "Cinnabar Lab",
+    "leaf-green": "Cinnabar Lab",
+    ruby: "Devon Corporation",
+    sapphire: "Devon Corporation",
+    emerald: "Devon Corporation",
+    diamond: "Oreburgh Mining Museum",
+    pearl: "Oreburgh Mining Museum",
+    platinum: "Oreburgh Mining Museum",
+    "heart-gold": "Pewter Museum of Science",
+    "soul-silver": "Pewter Museum of Science",
+    black: "Nacrene Museum",
+    white: "Nacrene Museum",
+    "black-2": "Nacrene Museum",
+    "white-2": "Nacrene Museum",
+    x: "Ambrette Town Fossil Lab",
+    y: "Ambrette Town Fossil Lab",
+    "omega-ruby": "Devon Corporation",
+    "alpha-sapphire": "Devon Corporation",
+    sun: "Route 8 Fossil Restoration Center",
+    moon: "Route 8 Fossil Restoration Center",
+    "ultra-sun": "Route 8 Fossil Restoration Center",
+    "ultra-moon": "Route 8 Fossil Restoration Center",
+    sword: "Fossil restoration on Route 6",
+    shield: "Fossil restoration on Route 6",
+  };
+
+  return locations[gameId] ?? "Fossil restoration";
+}
+
 function getEncounterRows(encounters: PokeApiEncounter[], versionId: string): EncounterRow[] {
-  return encounters
-    .map((encounter) => {
-      const versionDetail = encounter.version_details.find((detail) => detail.version.name === versionId);
+  const rows: EncounterRow[] = [];
 
-      if (!versionDetail) {
-        return null;
-      }
+  encounters.forEach((encounter) => {
+    const versionDetail = encounter.version_details.find((detail) => detail.version.name === versionId);
 
-      const levels = getLevelText(versionDetail.encounter_details);
-      const methods = [
-        ...new Set(versionDetail.encounter_details.map((detail) => formatLabel(detail.method.name))),
-      ];
+    if (!versionDetail) {
+      return;
+    }
 
-      return {
-        location: formatLabel(encounter.location_area.name.replace(/-area$/, "")),
-        levels,
-        methods: methods.length > 0 ? methods.join(", ") : "Special encounter",
-        chance: versionDetail.max_chance,
-      };
-    })
-    .filter((row): row is EncounterRow => row !== null)
-    .sort((first, second) => first.location.localeCompare(second.location));
+    const levels = getLevelText(versionDetail.encounter_details);
+    const methods = [
+      ...new Set(versionDetail.encounter_details.map((detail) => formatLabel(detail.method.name))),
+    ];
+
+    rows.push({
+      location: formatLabel(encounter.location_area.name.replace(/-area$/, "")),
+      levels,
+      methods: methods.length > 0 ? methods.join(", ") : "Special encounter",
+      chance: versionDetail.max_chance,
+      source: "Wild",
+    });
+  });
+
+  return rows.sort((first, second) => first.location.localeCompare(second.location));
+}
+
+function getFallbackEncounterRows(entry: PokemonEntry, gameId: string): EncounterRow[] {
+  const starterRow = getStarterFallback(entry.id, gameId);
+
+  if (starterRow) {
+    return [starterRow];
+  }
+
+  const fossilRow = getFossilFallback(entry.id, gameId);
+
+  if (fossilRow && entry.nativeGames.includes(gameId)) {
+    return [fossilRow];
+  }
+
+  if (entry.eventOnly) {
+    return [
+      createFallbackRow({
+        location: "Event distribution",
+        levels: "varies",
+        methods: "Event-only Pokemon. Usually not found as a normal in-game route encounter.",
+        source: "Event",
+      }),
+    ];
+  }
+
+  if (entry.tradeOnly) {
+    return [
+      createFallbackRow({
+        location: "Trade evolution or trade source",
+        levels: "varies",
+        methods: "Usually obtained through trading, trade evolution, or another linked game.",
+        source: "Trade",
+      }),
+    ];
+  }
+
+  if (!entry.nativeGames.includes(gameId) && entry.games.includes(gameId)) {
+    return [
+      createFallbackRow({
+        location: "External game source",
+        levels: "varies",
+        methods: "Not native to this game. Obtain through trade, transfer, migration, or compatibility features.",
+        source: "Transfer",
+      }),
+    ];
+  }
+
+  if (!entry.games.includes(gameId)) {
+    return [
+      createFallbackRow({
+        location: "Unavailable in this game",
+        levels: "-",
+        methods: "This Pokemon is outside the selected game's available pool.",
+        source: "Unavailable",
+      }),
+    ];
+  }
+
+  if (entry.roaming) {
+    return [
+      createFallbackRow({
+        location: "Roaming encounter",
+        levels: "varies",
+        methods: "Roams across routes after the story trigger for this game.",
+        source: "Roaming",
+      }),
+    ];
+  }
+
+  if (staticPokemonIds.has(entry.id)) {
+    return [
+      createFallbackRow({
+        location: "Static or story encounter",
+        levels: "varies",
+        methods: "Usually a one-time overworld, legendary, story, or special encounter.",
+        source: "Static",
+      }),
+    ];
+  }
+
+  return [
+    createFallbackRow({
+      location: entry.fullyEvolved ? "Evolution source" : "Gift, egg, evolution, or special source",
+      levels: "varies",
+      methods: entry.fullyEvolved
+        ? "Usually obtained by evolving an earlier Pokemon in the same evolutionary line."
+        : "No route-level wild encounter was found. This can happen for gifts, eggs, baby Pokemon, evolution-only Pokemon, or special cases.",
+      source: entry.fullyEvolved ? "Evolution" : "Special",
+    }),
+  ];
+}
+
+function createFallbackRow(row: Omit<EncounterRow, "chance">): EncounterRow {
+  return {
+    ...row,
+    chance: null,
+  };
 }
 
 function getLevelText(details: PokeApiEncounter["version_details"][number]["encounter_details"]) {

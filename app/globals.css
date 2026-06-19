@@ -1555,9 +1555,11 @@ button {
   min-height: 26px;
   margin-top: 4px;
   place-items: center;
+  padding: 0 9px;
   border-radius: 999px;
   color: #fff;
   background: var(--purple);
+  font-size: 0.78rem;
   font-weight: 900;
 }
 
@@ -1567,6 +1569,11 @@ button {
   border-radius: 10px;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.compactNotice {
+  padding: 11px 13px;
+  font-size: 0.92rem;
 }
 
 .appRoot[data-theme="light"] .detailNotice {
