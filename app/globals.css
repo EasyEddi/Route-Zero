@@ -2619,7 +2619,7 @@ button {
   }
 
   .teamPanel {
-    align-self: start;
+    align-self: stretch;
   }
 
   .teamStage {
