@@ -888,127 +888,129 @@ export default function Home() {
 
           {error ? <div className="message error">{error}</div> : null}
 
-          <div className="teamTools" data-visible={displayedTeam.length > 0}>
-            {displayedTeam.length > 0 ? (
-              <button
-                className="teamShinyButton"
-                type="button"
-                data-active={displayedTeam.every((_, index) => shinyCards[`team-${index}`])}
-                onClick={toggleTeamShinyCards}
-                onFocus={warmTeamShinySprites}
-                onPointerEnter={warmTeamShinySprites}
-                disabled={isRolling || displayedTeam.length === 0}
-                aria-label="Toggle shiny artwork for the full team"
-                title="Toggle full team shiny"
+          <div className="teamStage">
+            <div className="teamTools" data-visible={displayedTeam.length > 0}>
+              {displayedTeam.length > 0 ? (
+                <button
+                  className="teamShinyButton"
+                  type="button"
+                  data-active={displayedTeam.every((_, index) => shinyCards[`team-${index}`])}
+                  onClick={toggleTeamShinyCards}
+                  onFocus={warmTeamShinySprites}
+                  onPointerEnter={warmTeamShinySprites}
+                  disabled={isRolling || displayedTeam.length === 0}
+                  aria-label="Toggle shiny artwork for the full team"
+                  title="Toggle full team shiny"
+                >
+                  <Sparkles size={22} />
+                </button>
+              ) : null}
+            </div>
+
+            {displayedTeam.length === 0 && !error && !isRolling ? (
+              <div className="message empty">
+                <div className="miniBall" aria-hidden="true" />
+                <strong>No team rolled yet</strong>
+                <span>Choose your filters and start your run.</span>
+              </div>
+            ) : null}
+
+            {slotGridEntries.length > 0 && !error ? (
+              <div
+                className={`teamGrid ${isSlotGridRolling ? "rollingGrid" : ""}`}
+                aria-label={isSlotGridRolling ? "Rolling Pokemon silhouettes" : "Selected Pokemon team"}
+                style={{ ["--card-count" as string]: slotGridEntries.length }}
               >
-                <Sparkles size={22} />
-              </button>
+                {slotGridEntries.map((entry, index) => {
+                  if (!entry) {
+                    return null;
+                  }
+
+                  const cardKey = `team-${index}`;
+                  const isShiny = Boolean(shinyCards[cardKey]);
+                  const revealedEntry = team[index];
+                  const lockedEntry = lockedPokemon[index];
+                  const isLockedSlot = lockedEntry !== undefined;
+                  const displayEntry = isSlotGridRolling
+                    ? lockedEntry ?? (revealedEntry !== undefined && index < revealedCount ? revealedEntry : undefined)
+                    : entry;
+                  const isSlotRevealed = displayEntry !== undefined;
+                  const shouldRevealSlot = isSlotGridRolling
+                    ? isSlotRevealed && !isLockedSlot
+                    : recentlyLockedIndex === index;
+                  const cardClass = isSlotGridRolling
+                    ? isLockedSlot
+                      ? "pokemonCard lockedRollingCard"
+                      : `pokemonCard rollingCard ${shouldRevealSlot ? "revealedCard revealSequenceCard" : ""}`
+                    : `pokemonCard ${shouldRevealSlot ? "revealedCard revealSequenceCard lockedRevealCard" : ""}`;
+
+                  return (
+                    <article
+                      className={cardClass}
+                      data-shiny={isSlotRevealed ? isShiny : undefined}
+                      key={`slot-${index}`}
+                      role={displayEntry ? "button" : undefined}
+                      tabIndex={displayEntry ? 0 : undefined}
+                      onClick={displayEntry ? () => openPokemonDetail(displayEntry) : undefined}
+                      onKeyDown={displayEntry ? (event) => handleCardKeyDown(event, displayEntry) : undefined}
+                      style={{ ["--delay" as string]: `${index * (isSlotGridRolling ? 120 : 55)}ms` }}
+                    >
+                      <span className="dexNumber">{displayEntry ? String(displayEntry.id).padStart(3, "0") : "???"}</span>
+                      {displayEntry ? <SpecialBadges entry={displayEntry} /> : null}
+                      {displayEntry ? (
+                        <ShinyToggle
+                          active={isShiny}
+                          onClick={() => toggleShinyCard(cardKey, displayEntry)}
+                          onWarmup={() => warmShinySprite(displayEntry)}
+                        />
+                      ) : null}
+                      <img
+                        src={displayEntry ? getPokemonSprite(displayEntry, isShiny) : entry.sprite}
+                        alt=""
+                        className={`pokemonSprite ${isSlotRevealed ? "" : "silhouetteSprite"} ${isShiny ? "shinySprite" : ""}`}
+                        data-shiny={isSlotRevealed ? isShiny : undefined}
+                        key={displayEntry ? `${displayEntry.id}-${isShiny ? "shiny" : "normal"}` : "rolling-silhouette"}
+                        onError={(event) => {
+                          if (isShiny && displayEntry) {
+                            event.currentTarget.src = displayEntry.sprite;
+                          }
+                        }}
+                      />
+                      <h3>{displayEntry ? displayEntry.name : "Rolling"}</h3>
+                      {displayEntry ? (
+                        <div className="typeList">
+                          {displayEntry.types.map((type) => (
+                            <span className="typeBadge" data-type={type} key={type}>
+                              {typeLabels[type]}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="slotBars" aria-hidden="true">
+                          <span />
+                          <span />
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {team.length > 0 ? (
+              <div className="actionBar">
+                <button
+                  className="primaryButton slim"
+                  type="button"
+                  onClick={() => navigator.clipboard?.writeText(team.map((entry) => entry?.name).join(", "))}
+                  disabled={isRolling}
+                >
+                  <Copy size={21} />
+                  Copy team
+                </button>
+              </div>
             ) : null}
           </div>
-
-          {displayedTeam.length === 0 && !error && !isRolling ? (
-            <div className="message empty">
-              <div className="miniBall" aria-hidden="true" />
-              <strong>No team rolled yet</strong>
-              <span>Choose your filters and start your run.</span>
-            </div>
-          ) : null}
-
-          {slotGridEntries.length > 0 && !error ? (
-            <div
-              className={`teamGrid ${isSlotGridRolling ? "rollingGrid" : ""}`}
-              aria-label={isSlotGridRolling ? "Rolling Pokemon silhouettes" : "Selected Pokemon team"}
-              style={{ ["--card-count" as string]: slotGridEntries.length }}
-            >
-              {slotGridEntries.map((entry, index) => {
-                if (!entry) {
-                  return null;
-                }
-
-                const cardKey = `team-${index}`;
-                const isShiny = Boolean(shinyCards[cardKey]);
-                const revealedEntry = team[index];
-                const lockedEntry = lockedPokemon[index];
-                const isLockedSlot = lockedEntry !== undefined;
-                const displayEntry = isSlotGridRolling
-                  ? lockedEntry ?? (revealedEntry !== undefined && index < revealedCount ? revealedEntry : undefined)
-                  : entry;
-                const isSlotRevealed = displayEntry !== undefined;
-                const shouldRevealSlot = isSlotGridRolling
-                  ? isSlotRevealed && !isLockedSlot
-                  : recentlyLockedIndex === index;
-                const cardClass = isSlotGridRolling
-                  ? isLockedSlot
-                    ? "pokemonCard lockedRollingCard"
-                    : `pokemonCard rollingCard ${shouldRevealSlot ? "revealedCard revealSequenceCard" : ""}`
-                  : `pokemonCard ${shouldRevealSlot ? "revealedCard revealSequenceCard lockedRevealCard" : ""}`;
-
-                return (
-                  <article
-                    className={cardClass}
-                    data-shiny={isSlotRevealed ? isShiny : undefined}
-                    key={`slot-${index}`}
-                    role={displayEntry ? "button" : undefined}
-                    tabIndex={displayEntry ? 0 : undefined}
-                    onClick={displayEntry ? () => openPokemonDetail(displayEntry) : undefined}
-                    onKeyDown={displayEntry ? (event) => handleCardKeyDown(event, displayEntry) : undefined}
-                    style={{ ["--delay" as string]: `${index * (isSlotGridRolling ? 120 : 55)}ms` }}
-                  >
-                    <span className="dexNumber">{displayEntry ? String(displayEntry.id).padStart(3, "0") : "???"}</span>
-                    {displayEntry ? <SpecialBadges entry={displayEntry} /> : null}
-                    {displayEntry ? (
-                      <ShinyToggle
-                        active={isShiny}
-                        onClick={() => toggleShinyCard(cardKey, displayEntry)}
-                        onWarmup={() => warmShinySprite(displayEntry)}
-                      />
-                    ) : null}
-                    <img
-                      src={displayEntry ? getPokemonSprite(displayEntry, isShiny) : entry.sprite}
-                      alt=""
-                      className={`pokemonSprite ${isSlotRevealed ? "" : "silhouetteSprite"} ${isShiny ? "shinySprite" : ""}`}
-                      data-shiny={isSlotRevealed ? isShiny : undefined}
-                      key={displayEntry ? `${displayEntry.id}-${isShiny ? "shiny" : "normal"}` : "rolling-silhouette"}
-                      onError={(event) => {
-                        if (isShiny && displayEntry) {
-                          event.currentTarget.src = displayEntry.sprite;
-                        }
-                      }}
-                    />
-                    <h3>{displayEntry ? displayEntry.name : "Rolling"}</h3>
-                    {displayEntry ? (
-                      <div className="typeList">
-                        {displayEntry.types.map((type) => (
-                          <span className="typeBadge" data-type={type} key={type}>
-                            {typeLabels[type]}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="slotBars" aria-hidden="true">
-                        <span />
-                        <span />
-                      </div>
-                    )}
-                  </article>
-                );
-              })}
-            </div>
-          ) : null}
-
-          {team.length > 0 ? (
-            <div className="actionBar">
-              <button
-                className="primaryButton slim"
-                type="button"
-                onClick={() => navigator.clipboard?.writeText(team.map((entry) => entry?.name).join(", "))}
-                disabled={isRolling}
-              >
-                <Copy size={21} />
-                Copy team
-              </button>
-            </div>
-          ) : null}
         </section>
       </section>
 

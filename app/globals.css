@@ -999,6 +999,10 @@ button {
   visibility: hidden;
 }
 
+.teamStage {
+  min-width: 0;
+}
+
 .teamShinyButton {
   position: relative;
   display: grid;
@@ -2609,6 +2613,34 @@ button {
   }
 }
 
+@media (min-width: 981px) {
+  .teamPanel {
+    align-self: start;
+  }
+
+  .teamStage {
+    position: sticky;
+    top: 18px;
+    max-height: calc(100vh - 36px);
+    overflow-y: auto;
+    padding: 2px 6px 18px;
+    scrollbar-width: thin;
+  }
+
+  .teamStage::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .teamStage::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(180, 200, 230, 0.18);
+  }
+
+  .teamStage::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
 @media (max-width: 980px) {
   .heroGrid {
     grid-template-columns: 1fr;
@@ -2617,6 +2649,13 @@ button {
 
   .teamPanel {
     padding: 12px 0 0;
+  }
+
+  .teamStage {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
   }
 }
 
