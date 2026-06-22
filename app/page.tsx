@@ -30,7 +30,7 @@ import { games } from "@/data/games";
 import { pokemon } from "@/data/pokemon";
 import { pokemonTypes } from "@/data/types";
 import { getSpecialPokemonLabels } from "@/lib/pokemon-tags";
-import { analyzeTeam } from "@/lib/team-analysis";
+import { analyzePokemonMatchup, analyzeTeam } from "@/lib/team-analysis";
 import { applyFilters, rollTeam } from "@/lib/team-generator";
 import type { PokemonEntry, TeamFilters } from "@/lib/types";
 
@@ -116,6 +116,9 @@ export default function Home() {
     () => analyzeTeam(displayedTeam.filter((entry): entry is PokemonEntry => Boolean(entry))),
     [displayedTeam],
   );
+  const detailMatchup = useMemo(() => {
+    return detailPokemon ? analyzePokemonMatchup(detailPokemon) : null;
+  }, [detailPokemon]);
 
   const availableCount = useMemo(() => {
     return rollTeam(filters, pokemon, { dryRun: true }).availableCount;
@@ -1214,6 +1217,60 @@ export default function Home() {
                   </div>
                 </div>
               </section>
+
+              {detailMatchup ? (
+                <section className="detailSection matchupSection" aria-label={`${detailPokemon.name} type matchups`}>
+                  <div className="detailSectionHeader">
+                    <span>
+                      <Swords size={19} />
+                      Type matchup
+                    </span>
+                    <small>Battle profile</small>
+                  </div>
+                  <div className="matchupGrid">
+                    <div>
+                      <span>Weak against</span>
+                      <div className="synergyTypeList">
+                        {detailMatchup.weakAgainst.length > 0 ? (
+                          detailMatchup.weakAgainst.map((type) => <strong key={type}>{type}</strong>)
+                        ) : (
+                          <strong>None obvious</strong>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <span>Resists</span>
+                      <div className="synergyTypeList">
+                        {detailMatchup.resists.length > 0 ? (
+                          detailMatchup.resists.map((type) => <strong key={type}>{type}</strong>)
+                        ) : (
+                          <strong>No resistances</strong>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <span>Immune to</span>
+                      <div className="synergyTypeList">
+                        {detailMatchup.immuneTo.length > 0 ? (
+                          detailMatchup.immuneTo.map((type) => <strong key={type}>{type}</strong>)
+                        ) : (
+                          <strong>No immunities</strong>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <span>Strong into</span>
+                      <div className="synergyTypeList">
+                        {detailMatchup.strongInto.length > 0 ? (
+                          detailMatchup.strongInto.map((type) => <strong key={type}>{type}</strong>)
+                        ) : (
+                          <strong>Low coverage</strong>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
 
               <section className="detailSection" aria-labelledby="encounter-title">
                 <div className="detailSectionHeader">

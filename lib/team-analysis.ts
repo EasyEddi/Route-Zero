@@ -6,6 +6,13 @@ export type TeamAnalysis = {
   strengths: string[];
 };
 
+export type PokemonTypeMatchup = {
+  weakAgainst: string[];
+  resists: string[];
+  immuneTo: string[];
+  strongInto: string[];
+};
+
 const typeNames: Record<string, string> = {
   bug: "Bug",
   dark: "Dark",
@@ -154,4 +161,32 @@ export function analyzeTeam(entries: PokemonEntry[]): TeamAnalysis {
 
 export function getTeamSynergyScore(entries: PokemonEntry[]) {
   return analyzeTeam(entries).synergy;
+}
+
+export function analyzePokemonMatchup(entry: PokemonEntry): PokemonTypeMatchup {
+  const allTypes = Object.keys(typeNames);
+
+  const weakAgainst = allTypes
+    .filter((attackingType) => typeEffectiveness(attackingType, entry.types) > 1)
+    .sort((a, b) => typeEffectiveness(b, entry.types) - typeEffectiveness(a, entry.types));
+
+  const resists = allTypes
+    .filter((attackingType) => {
+      const multiplier = typeEffectiveness(attackingType, entry.types);
+      return multiplier > 0 && multiplier < 1;
+    })
+    .sort((a, b) => typeEffectiveness(a, entry.types) - typeEffectiveness(b, entry.types));
+
+  const immuneTo = allTypes.filter((attackingType) => typeEffectiveness(attackingType, entry.types) === 0);
+
+  const strongInto = allTypes.filter((defendingType) => {
+    return entry.types.some((attackingType) => typeEffectiveness(attackingType, [defendingType]) > 1);
+  });
+
+  return {
+    weakAgainst: formatTypes(weakAgainst),
+    resists: formatTypes(resists),
+    immuneTo: formatTypes(immuneTo),
+    strongInto: formatTypes(strongInto),
+  };
 }

@@ -1925,6 +1925,46 @@ button {
   background: rgba(255, 255, 255, 0.68);
 }
 
+.matchupSection {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(78, 198, 216, 0.14), transparent 15rem),
+    linear-gradient(180deg, rgba(18, 31, 51, 0.78), rgba(10, 18, 31, 0.86));
+}
+
+.appRoot[data-theme="light"] .matchupSection {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(78, 198, 216, 0.11), transparent 15rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(239, 245, 255, 0.9));
+}
+
+.matchupGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.matchupGrid > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  background: rgba(5, 15, 29, 0.38);
+}
+
+.appRoot[data-theme="light"] .matchupGrid > div {
+  border-color: rgba(28, 42, 64, 0.1);
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.matchupGrid span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .detailSection {
   margin-top: 16px;
   padding: 16px;
@@ -3089,6 +3129,15 @@ button {
 
   .detailSection {
     padding: 13px;
+  }
+
+  .matchupGrid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .matchupGrid > div {
+    padding: 11px;
   }
 
   .detailSectionHeader {
