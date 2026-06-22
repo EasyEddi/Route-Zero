@@ -18,6 +18,7 @@
 
 html {
   min-height: 100%;
+  font-size: 17px;
   background: var(--bg);
   text-size-adjust: 100%;
 }
@@ -27,7 +28,7 @@ body {
   margin: 0;
   color: var(--text);
   font-family: var(--font-ui);
-  font-size: 15px;
+  font-size: 17px;
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
