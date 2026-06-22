@@ -1,4 +1,5 @@
 import type { PokemonEntry, TeamFilters } from "./types";
+import { getTeamSynergyScore } from "./team-analysis";
 import { isParadoxPokemon, isSpecialPokemon } from "./pokemon-tags";
 
 type RollOptions = {
@@ -33,6 +34,10 @@ export function applyFilters(filters: TeamFilters, entries: PokemonEntry[]) {
     }
 
     if (filters.fullyEvolvedOnly && !pokemon.fullyEvolved) {
+      return false;
+    }
+
+    if (filters.battleReadyTeam && !pokemon.fullyEvolved) {
       return false;
     }
 
@@ -75,11 +80,14 @@ function getLockedEntries(pool: PokemonEntry[], lockedPokemonIds: number[]) {
 }
 
 function buildTeamWithRules(filters: TeamFilters, pool: PokemonEntry[], lockedEntries: PokemonEntry[] = []) {
+  const allowDuplicatePokemon = filters.battleReadyTeam ? false : filters.allowDuplicatePokemon;
+  const allowDuplicateTypes = filters.battleReadyTeam ? false : filters.allowDuplicateTypes;
+
   if (lockedEntries.length > filters.teamSize) {
     return null;
   }
 
-  if (!filters.allowDuplicatePokemon) {
+  if (!allowDuplicatePokemon) {
     const uniqueLockedIds = new Set(lockedEntries.map((entry) => entry.id));
 
     if (uniqueLockedIds.size !== lockedEntries.length) {
@@ -87,7 +95,7 @@ function buildTeamWithRules(filters: TeamFilters, pool: PokemonEntry[], lockedEn
     }
   }
 
-  if (!filters.allowDuplicateTypes) {
+  if (!allowDuplicateTypes) {
     const usedTypes = new Set<string>();
 
     for (const entry of lockedEntries) {
@@ -99,16 +107,16 @@ function buildTeamWithRules(filters: TeamFilters, pool: PokemonEntry[], lockedEn
     }
   }
 
-  if (filters.allowDuplicatePokemon && filters.allowDuplicateTypes) {
+  if (allowDuplicatePokemon && allowDuplicateTypes) {
     return [
       ...lockedEntries,
       ...Array.from({ length: filters.teamSize - lockedEntries.length }, () => pool[Math.floor(Math.random() * pool.length)]),
     ];
   }
 
-  if (filters.allowDuplicateTypes) {
+  if (allowDuplicateTypes) {
     const usedLockedIds = new Set(lockedEntries.map((entry) => entry.id));
-    const candidates = filters.allowDuplicatePokemon ? pool : pool.filter((entry) => !usedLockedIds.has(entry.id));
+    const candidates = allowDuplicatePokemon ? pool : pool.filter((entry) => !usedLockedIds.has(entry.id));
     const team = [...lockedEntries, ...shuffleEntries(candidates).slice(0, filters.teamSize - lockedEntries.length)];
     return team.length === filters.teamSize ? team : null;
   }
@@ -131,7 +139,7 @@ function buildTeamWithRules(filters: TeamFilters, pool: PokemonEntry[], lockedEn
     }
 
     const candidates = shuffleEntries(pool).filter((entry) => {
-      if (!filters.allowDuplicatePokemon && usedIds.has(entry.id)) {
+      if (!allowDuplicatePokemon && usedIds.has(entry.id)) {
         return false;
       }
 
@@ -160,6 +168,28 @@ function buildTeamWithRules(filters: TeamFilters, pool: PokemonEntry[], lockedEn
   }
 
   return chooseNext() ? selected : null;
+}
+
+function buildBattleReadyTeam(filters: TeamFilters, pool: PokemonEntry[], lockedEntries: PokemonEntry[]) {
+  let bestTeam: PokemonEntry[] | null = null;
+  let bestScore = -1;
+
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const team = buildTeamWithRules(filters, pool, lockedEntries);
+
+    if (!team) {
+      continue;
+    }
+
+    const score = getTeamSynergyScore(team);
+
+    if (score > bestScore) {
+      bestTeam = team;
+      bestScore = score;
+    }
+  }
+
+  return bestTeam;
 }
 
 export function rollTeam(
@@ -195,7 +225,9 @@ export function rollTeam(
     };
   }
 
-  if (pool.length === 0 || (!filters.allowDuplicatePokemon && pool.length < filters.teamSize)) {
+  const allowDuplicatePokemon = filters.battleReadyTeam ? false : filters.allowDuplicatePokemon;
+
+  if (pool.length === 0 || (!allowDuplicatePokemon && pool.length < filters.teamSize)) {
     return {
       ok: false,
       message: `Only ${pool.length} Pokemon match these filters. You need at least ${filters.teamSize} for this team.`,
@@ -203,12 +235,16 @@ export function rollTeam(
     };
   }
 
-  const team = buildTeamWithRules(filters, pool, lockedEntries);
+  const team = filters.battleReadyTeam
+    ? buildBattleReadyTeam(filters, pool, lockedEntries)
+    : buildTeamWithRules(filters, pool, lockedEntries);
 
   if (!team) {
     return {
       ok: false,
-      message: "These filters cannot build a full team without duplicate types. Allow duplicate Pokemon types or loosen another filter.",
+      message: filters.battleReadyTeam
+        ? "Battle-ready mode needs enough fully evolved Pokemon without duplicate types. Loosen another filter or unlock a conflicting Pokemon."
+        : "These filters cannot build a full team without duplicate types. Allow duplicate Pokemon types or loosen another filter.",
       availableCount: pool.length,
     };
   }

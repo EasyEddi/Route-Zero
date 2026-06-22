@@ -30,4 +30,5 @@ export type TeamFilters = {
   allowParadoxPokemon: boolean;
   allowDuplicatePokemon: boolean;
   allowDuplicateTypes: boolean;
+  battleReadyTeam: boolean;
 };

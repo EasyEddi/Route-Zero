@@ -21,6 +21,7 @@ import {
   Sparkles,
   Moon,
   Repeat2,
+  Swords,
   Sun,
   Tags,
   Users,
@@ -29,6 +30,7 @@ import { games } from "@/data/games";
 import { pokemon } from "@/data/pokemon";
 import { pokemonTypes } from "@/data/types";
 import { getSpecialPokemonLabels } from "@/lib/pokemon-tags";
+import { analyzeTeam } from "@/lib/team-analysis";
 import { applyFilters, rollTeam } from "@/lib/team-generator";
 import type { PokemonEntry, TeamFilters } from "@/lib/types";
 
@@ -44,6 +46,7 @@ const defaultFilters: TeamFilters = {
   allowParadoxPokemon: false,
   allowDuplicatePokemon: false,
   allowDuplicateTypes: false,
+  battleReadyTeam: false,
 };
 
 const typeLabels: Record<string, string> = {
@@ -109,6 +112,10 @@ export default function Home() {
     [lockedPokemonIds],
   );
   const displayedTeam = team.length > 0 ? team : lockedPokemon;
+  const teamAnalysis = useMemo(
+    () => analyzeTeam(displayedTeam.filter((entry): entry is PokemonEntry => Boolean(entry))),
+    [displayedTeam],
+  );
 
   const availableCount = useMemo(() => {
     return rollTeam(filters, pokemon, { dryRun: true }).availableCount;
@@ -455,16 +462,28 @@ export default function Home() {
   function updateDuplicatePokemon(checked: boolean) {
     setFilters((current) => ({
       ...current,
-      allowDuplicatePokemon: checked,
-      allowDuplicateTypes: checked ? true : current.allowDuplicateTypes,
+      allowDuplicatePokemon: current.battleReadyTeam ? false : checked,
+      allowDuplicateTypes: current.battleReadyTeam ? false : checked ? true : current.allowDuplicateTypes,
     }));
   }
 
   function updateDuplicateTypes(checked: boolean) {
     setFilters((current) => ({
       ...current,
-      allowDuplicateTypes: current.allowDuplicatePokemon ? true : checked,
+      allowDuplicateTypes: current.battleReadyTeam || current.allowDuplicatePokemon ? current.allowDuplicatePokemon : checked,
     }));
+  }
+
+  function updateBattleReadyTeam(checked: boolean) {
+    setFilters((current) => ({
+      ...current,
+      battleReadyTeam: checked,
+      fullyEvolvedOnly: checked ? true : current.fullyEvolvedOnly,
+      allowDuplicatePokemon: checked ? false : current.allowDuplicatePokemon,
+      allowDuplicateTypes: checked ? false : current.allowDuplicateTypes,
+    }));
+    clearRolledTeam();
+    setError(null);
   }
 
   function validateLockedPokemonCandidate(entry: PokemonEntry) {
@@ -720,7 +739,7 @@ export default function Home() {
               label="Fully evolved Pokemon only"
               description="Only final evolutions are allowed in the team pool."
               checked={filters.fullyEvolvedOnly}
-              onChange={(checked) => updateFilter("fullyEvolvedOnly", checked)}
+              onChange={(checked) => updateFilter("fullyEvolvedOnly", filters.battleReadyTeam ? true : checked)}
             />
             <ToggleRow
               icon={<Sparkles size={22} />}
@@ -756,6 +775,13 @@ export default function Home() {
               description="Ancient and future Paradox Pokemon can appear when this is enabled."
               checked={filters.allowParadoxPokemon}
               onChange={(checked) => updateFilter("allowParadoxPokemon", checked)}
+            />
+            <ToggleRow
+              icon={<Swords size={22} />}
+              label="Strong battle team"
+              description="Prefers fully evolved Pokemon, avoids repeated types, and rolls for stronger type synergy."
+              checked={filters.battleReadyTeam}
+              onChange={updateBattleReadyTeam}
             />
             <ToggleRow
               icon={<Repeat2 size={22} />}
@@ -994,6 +1020,40 @@ export default function Home() {
                     </article>
                   );
                 })}
+              </div>
+            ) : null}
+
+            {displayedTeam.length > 0 && !error ? (
+              <div className="synergyPanel">
+                <div className="synergyHeader">
+                  <span>Team synergy</span>
+                  <strong>{teamAnalysis.synergy}%</strong>
+                </div>
+                <div className="synergyMeter" aria-hidden="true">
+                  <span style={{ width: `${teamAnalysis.synergy}%` }} />
+                </div>
+                <div className="synergyRows">
+                  <div>
+                    <span>Weak against</span>
+                    <div className="synergyTypeList">
+                      {teamAnalysis.weaknesses.length > 0 ? (
+                        teamAnalysis.weaknesses.map((type) => <strong key={type}>{type}</strong>)
+                      ) : (
+                        <strong>None obvious</strong>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <span>Strong into</span>
+                    <div className="synergyTypeList">
+                      {teamAnalysis.strengths.length > 0 ? (
+                        teamAnalysis.strengths.map((type) => <strong key={type}>{type}</strong>)
+                      ) : (
+                        <strong>Low coverage</strong>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : null}
 

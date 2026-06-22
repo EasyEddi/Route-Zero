@@ -1551,6 +1551,104 @@ button {
   padding: 9px 15px;
 }
 
+.synergyPanel {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(143, 87, 255, 0.14), transparent 16rem),
+    rgba(5, 15, 29, 0.62);
+}
+
+.appRoot[data-theme="light"] .synergyPanel {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(143, 87, 255, 0.11), transparent 16rem),
+    rgba(255, 255, 255, 0.66);
+}
+
+.synergyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.synergyHeader strong {
+  color: #fff;
+  font-size: 1.35rem;
+}
+
+.appRoot[data-theme="light"] .synergyHeader strong {
+  color: #172033;
+}
+
+.synergyMeter {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.appRoot[data-theme="light"] .synergyMeter {
+  background: rgba(28, 42, 64, 0.1);
+}
+
+.synergyMeter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7b45ef, #4ec6d8, #ffe978);
+}
+
+.synergyRows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.synergyRows > div {
+  min-width: 0;
+}
+
+.synergyRows span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.synergyTypeList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.synergyTypeList strong {
+  display: inline-flex;
+  min-height: 27px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #eaf0ff;
+  background: rgba(18, 31, 52, 0.76);
+  font-size: 0.78rem;
+}
+
+.appRoot[data-theme="light"] .synergyTypeList strong {
+  border-color: rgba(28, 42, 64, 0.1);
+  color: #243149;
+  background: rgba(255, 255, 255, 0.72);
+}
+
 [data-type="fire"] { background: linear-gradient(180deg, #e9673d, #b93525); }
 [data-type="flying"] { background: linear-gradient(180deg, #796be0, #4c42b5); }
 [data-type="ghost"] { background: linear-gradient(180deg, #6c56a9, #40306f); }
@@ -2890,6 +2988,22 @@ button {
 
   .typeBadge {
     padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+
+  .synergyPanel {
+    margin-top: 10px;
+    padding: 12px;
+  }
+
+  .synergyRows {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .synergyTypeList strong {
+    min-height: 25px;
+    padding: 0 8px;
     font-size: 0.72rem;
   }
 
