@@ -2628,8 +2628,8 @@ button {
 
   .teamStage {
     position: sticky;
-    top: 18px;
-    padding: 2px 6px 24px;
+    top: 12px;
+    padding: 0 6px 12px;
   }
 }
 
