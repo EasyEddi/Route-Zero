@@ -1003,6 +1003,10 @@ button {
   min-width: 0;
 }
 
+.teamStage .lockedBuilder {
+  margin-top: 0;
+}
+
 .teamShinyButton {
   position: relative;
   display: grid;

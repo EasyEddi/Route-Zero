@@ -823,72 +823,72 @@ export default function Home() {
             <span>Good luck on your adventure!</span>
           </div>
 
-          <div className="lockedBuilder">
-            <div className="lockedBuilderHeader">
-              <span>Locked team slots</span>
-              <strong>
-                {lockedPokemonIds.length}/{filters.teamSize}
-              </strong>
-            </div>
-            <div className="lockedSearchWrap">
-              <label className="lockedSearch">
-                <Search size={18} />
-                <input
-                  type="text"
-                  value={lockedSearch}
-                  onChange={(event) => {
-                    setLockedSearch(event.target.value);
-                    setLockedMessage(null);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      submitLockedPokemon();
-                    }
+          <div className="teamStage">
+            <div className="lockedBuilder">
+              <div className="lockedBuilderHeader">
+                <span>Locked team slots</span>
+                <strong>
+                  {lockedPokemonIds.length}/{filters.teamSize}
+                </strong>
+              </div>
+              <div className="lockedSearchWrap">
+                <label className="lockedSearch">
+                  <Search size={18} />
+                  <input
+                    type="text"
+                    value={lockedSearch}
+                    onChange={(event) => {
+                      setLockedSearch(event.target.value);
+                      setLockedMessage(null);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        submitLockedPokemon();
+                      }
 
-                    if (event.key === "Tab" && lockedSuggestions[0]) {
-                      event.preventDefault();
-                      addLockedPokemon(lockedSuggestions[0]);
-                    }
-                  }}
-                  placeholder={filters.gameId ? "Lock a Pokemon" : "Select a game first"}
-                  disabled={!filters.gameId || isRolling}
-                  autoComplete="off"
-                />
-              </label>
-              {lockedSuggestions.length > 0 ? (
-                <div className="lockedSuggestions" role="listbox">
-                  {lockedSuggestions.map((entry) => (
-                    <button type="button" key={entry.id} onClick={() => addLockedPokemon(entry)} role="option">
-                      <img src={entry.sprite} alt="" />
-                      <span>{entry.name}</span>
-                      <small>#{String(entry.id).padStart(3, "0")}</small>
-                    </button>
-                  ))}
+                      if (event.key === "Tab" && lockedSuggestions[0]) {
+                        event.preventDefault();
+                        addLockedPokemon(lockedSuggestions[0]);
+                      }
+                    }}
+                    placeholder={filters.gameId ? "Lock a Pokemon" : "Select a game first"}
+                    disabled={!filters.gameId || isRolling}
+                    autoComplete="off"
+                  />
+                </label>
+                {lockedSuggestions.length > 0 ? (
+                  <div className="lockedSuggestions" role="listbox">
+                    {lockedSuggestions.map((entry) => (
+                      <button type="button" key={entry.id} onClick={() => addLockedPokemon(entry)} role="option">
+                        <img src={entry.sprite} alt="" />
+                        <span>{entry.name}</span>
+                        <small>#{String(entry.id).padStart(3, "0")}</small>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+              {lockedPokemon.length > 0 ? (
+                <div className="lockedPicks">
+                  {lockedPokemon.map((entry, index) =>
+                    entry ? (
+                      <span className="lockedPick" key={`${entry.id}-${index}`}>
+                        <img src={entry.sprite} alt="" />
+                        {entry.name}
+                        <button type="button" onClick={() => removeLockedPokemon(index)} aria-label={`Remove ${entry.name}`}>
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ) : null,
+                  )}
                 </div>
               ) : null}
+              {lockedMessage ? <div className="lockedMessage">{lockedMessage}</div> : null}
             </div>
-            {lockedPokemon.length > 0 ? (
-              <div className="lockedPicks">
-                {lockedPokemon.map((entry, index) =>
-                  entry ? (
-                    <span className="lockedPick" key={`${entry.id}-${index}`}>
-                      <img src={entry.sprite} alt="" />
-                      {entry.name}
-                      <button type="button" onClick={() => removeLockedPokemon(index)} aria-label={`Remove ${entry.name}`}>
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ) : null,
-                )}
-              </div>
-            ) : null}
-            {lockedMessage ? <div className="lockedMessage">{lockedMessage}</div> : null}
-          </div>
 
-          {error ? <div className="message error">{error}</div> : null}
+            {error ? <div className="message error">{error}</div> : null}
 
-          <div className="teamStage">
             <div className="teamTools" data-visible={displayedTeam.length > 0}>
               {displayedTeam.length > 0 ? (
                 <button
