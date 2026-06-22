@@ -2614,6 +2614,10 @@ button {
 }
 
 @media (min-width: 981px) {
+  .shell {
+    overflow: visible;
+  }
+
   .teamPanel {
     align-self: start;
   }
@@ -2621,23 +2625,7 @@ button {
   .teamStage {
     position: sticky;
     top: 18px;
-    max-height: calc(100vh - 36px);
-    overflow-y: auto;
-    padding: 2px 6px 18px;
-    scrollbar-width: thin;
-  }
-
-  .teamStage::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .teamStage::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: rgba(180, 200, 230, 0.18);
-  }
-
-  .teamStage::-webkit-scrollbar-track {
-    background: transparent;
+    padding: 2px 6px 24px;
   }
 }
 
